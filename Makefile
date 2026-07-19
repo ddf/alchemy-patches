@@ -8,7 +8,7 @@
 #   make clean          — remove the build tree
 # =============================================================================
 
-TARGET = stereo_eq
+TARGET ?= stereo_eq
 
 # Alchemy Lab board revision: v1 | v2
 BOARD ?= v2
@@ -19,10 +19,13 @@ endif
 ALCHEMY_DIR  = lib/alchemy-sdk
 LIBDAISY_DIR = lib/libDaisy
 
+TARGET_MAIN ?= $(TARGET)
+TARGET_DSP = $(TARGET_MAIN)_dsp
+
 # ── App sources — yours to edit ─────────────────────────────────────────────
 CPP_SOURCES = \
-    src/stereo_eq.cpp \
-    src/stereo_eq_dsp.cpp
+    src/$(TARGET_MAIN).cpp \
+    src/$(TARGET_DSP).cpp
 
 # ── Alchemy SDK, compiled straight from the submodule ───────────────────────
 CPP_SOURCES += $(sort $(shell find $(ALCHEMY_DIR)/framework/src -name '*.cpp'))
