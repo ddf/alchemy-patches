@@ -4,3 +4,7 @@
 [submodule "lib/libDaisy"]
 	path = lib/libDaisy
 	url = https://github.com/electro-smith/libDaisy.git
+[submodule "lib/vessicle"]
+	path = lib/vessicle
+	url = https://github.com/ddf/vessicle.git
+	branch = develop
