@@ -5,14 +5,16 @@
 #include "condolences_dsp.h"
 #include "Condolences.h"
 
-namespace condolences_dsp
+namespace condolences
 {
   using SampleArray = vessl::array<float>;
   using Condol = Condolences<float, 2048>;
+  using Smoother = vessl::math::easing::smoother<float>;
 // state
 namespace
 {
   Condol* condolences_;
+  Smoother mix_;
 }
 
 void Init(float sample_rate)
@@ -24,11 +26,48 @@ void Init(float sample_rate)
   condolences_->density() = 0.2f;
   condolences_->decay() = 1.f;
   condolences_->feedback() = 0.f;
+
+  mix_.value = 0.5f;
+  mix_.degree = 0.95f;
 }
 
 void DeInit()
 {
   Condol::destroy(condolences_);
+}
+
+void SetDensity(float value)
+{
+  condolences_->density() = value;
+}
+
+void SetDecay(float value)
+{
+  condolences_->decay() = value;
+}
+
+void SetSpacing(float value)
+{
+  condolences_->spacing() = value;
+}
+
+void SetSpread(float value)
+{
+  condolences_->spread() = value;
+}
+
+void SetMix(float value)
+{
+  mix_ = value;
+}
+
+void SetFeedback(float value)
+{
+  condolences_->feedback() = value;
+}
+
+void Update()
+{
 }
 
 void Process(
@@ -50,10 +89,11 @@ void Process(
   condolences_->process(out_left, out_left);
   
   float l,r;
+  float m = mix_.value;
   for(size_t i = 0; i < block_size; ++i)
   {
-    vessl::sample::crossfade(in_left[i], out_left[i], 1.f, &l);
-    vessl::sample::crossfade(in_right[i], out_left[i], 1.f, &r);
+    vessl::sample::crossfade(in_left[i], out_left[i], m, &l);
+    vessl::sample::crossfade(in_right[i], out_left[i], m, &r);
     out_left[i] = l;
     out_right[i] = r;
   }

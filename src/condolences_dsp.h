@@ -4,13 +4,22 @@
 
 #include "daisy_seed.h"
 
-namespace condolences_dsp
+namespace condolences
 {
  /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
 void Init(float sample_rate);
 
 /** Release resources */
 void DeInit();
+
+void SetDensity(float value);
+void SetDecay(float value);
+void SetSpacing(float value);
+void SetSpread(float value);
+void SetMix(float value);
+void SetFeedback(float value);
+
+void Update();
 
 /**
  * Audio callback. Pass directly to hw.StartAudio(eq_dsp::Process).
