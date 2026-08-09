@@ -19,6 +19,7 @@ struct ParamPalette
   float scale_low, scale_high;
 };
 
+constexpr ParamPalette fuschia_palette = { alchemy::kColorFuschia, 0.2f, 1.f };
 constexpr ParamPalette violet_palette = { alchemy::kColorViolet, 0.2f, 1.0f };
 constexpr ParamPalette lime_palette = { alchemy::kColorLime, 0.2f, 1.f };
 

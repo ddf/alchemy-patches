@@ -10,45 +10,39 @@
 #include "alchemy/surface/virtual_knob.h"
 
 #include "condolences_dsp.h"
+#include "vessicle_palette.h"
 
 using namespace alchemy;
 
 /* We define each knob's curve and LED Ring animation.  CV routing lives
  * in the CvMatrix declaration below; declaring it once at the matrix
  * level keeps the knob declarations purely about the knob.  */
-static constexpr float kGainMaxDb = 24.f;
 
 /* Page 1 */
+static VirtualKnob l_density = VirtualKnob(0, "Left Density")
+  .Linear(0.f, 1.f)
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-// static VirtualKnob l_hi_level = VirtualKnob(0, "Hi Level")
-//     .Linear(-kGainMaxDb, +kGainMaxDb)
-//     .Ring(Bipolar(kLeftPalette.hi.level_pos,
-//                   kLeftPalette.hi.level_neg,
-//                   kLeftPalette.hi.level_center));
+// in seconds, sensible minimum value depends on spectrum size and sample rate
+static VirtualKnob l_decay = VirtualKnob(1, "Left Decay")
+  .Linear(0.05f, 10.f)
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-// static VirtualKnob l_hi_freq = VirtualKnob(1, "Hi Freq")
-//     .Exp(1000.f, 16000.f)
-//     .Ring(Level(kLeftPalette.hi.freq, FillAnim::Pulse));
+static VirtualKnob l_spacing = VirtualKnob(2, "Left Spacing")
+  .Linear(0.f, 1.f)
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-// static VirtualKnob l_mid_level = VirtualKnob(2, "Mid Level")
-//     .Linear(-kGainMaxDb, +kGainMaxDb)
-//     .Ring(Bipolar(kLeftPalette.mid.level_pos,
-//                   kLeftPalette.mid.level_neg,
-//                   kLeftPalette.mid.level_center));
+static VirtualKnob l_spread = VirtualKnob(3, "Left Spread")
+  .Linear(0.f, 1.f)
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-// static VirtualKnob l_mid_freq = VirtualKnob(3, "Mid Freq")
-//     .Exp(200.f, 5000.f)
-//     .Ring(Level(kLeftPalette.mid.freq, FillAnim::Ripple));
+static VirtualKnob l_mix = VirtualKnob(4, "Left Mix")
+  .Linear(0.f, 1.f)
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-// static VirtualKnob l_lo_level = VirtualKnob(4, "Lo Level")
-//     .Linear(-kGainMaxDb, +kGainMaxDb)
-//     .Ring(Bipolar(kLeftPalette.lo.level_pos,
-//                   kLeftPalette.lo.level_neg,
-//                   kLeftPalette.lo.level_center));
-
-// static VirtualKnob l_lo_freq = VirtualKnob(5, "Lo Freq")
-//     .Exp(60.f, 600.f)
-//     .Ring(Level(kLeftPalette.lo.freq, FillAnim::Pulse));
+static VirtualKnob l_feedback = VirtualKnob(5, "Left Feedback")
+  .Linear(0.f, 0.5f)
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 
 // /* Page 2 */
@@ -83,18 +77,21 @@ static constexpr float kGainMaxDb = 24.f;
 //     .Ring(Level(kRightPalette.lo.freq, FillAnim::Pulse));
 
 // /* Bind knobs to page */
-// static Page left_page  = Page(0).Knobs(l_hi_level, l_hi_freq,
-//                                        l_mid_level, l_mid_freq,
-//                                        l_lo_level, l_lo_freq);
+static Page left_page  = Page(0).Knobs(l_density, l_decay,
+                                       l_spacing, l_spread,
+                                       l_mix, l_feedback);
+
 // static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
 //                                        r_mid_level, r_mid_freq,
 //                                        r_lo_level, r_lo_freq);
 
+constexpr size_t page_count = 1;
+
 /* Get our SDK surfaces and opt in to everything */
 static AlchemyLab                        hw;
 static ControlLoop                       loop    (hw);
-static Pager                             pager   (hw.buttons[0], 2, kNumPots);
-static ParamLock<2 * kNumPots>           locks   (hw.buttons[0], pager);
+static Pager                             pager   (hw.buttons[0], page_count, kNumPots);
+static ParamLock<page_count * kNumPots>  locks   (hw.buttons[0], pager);
 static Presets                           presets (hw.seed.qspi);
 static Settings                          settings(hw, &pager);
 static CvMatrix                          cv_matrix(kNumCvInputs);
@@ -102,13 +99,20 @@ static CvMatrix                          cv_matrix(kNumCvInputs);
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
+  condolences::SetDensity(l_density.Value());
+  condolences::SetDecay(l_decay.Value());
+  condolences::SetSpacing(l_spacing.Value());
+  condolences::SetSpread(l_spread.Value());
+  condolences::SetMix(l_mix.Value());
+  condolences::SetFeedback(l_feedback.Value());
 
+  condolences::Update();
 }
 
 int main()
 {
-    hw.Init();
-    condolences_dsp::Init(hw.SampleRate());
+    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, 256);
+    condolences::Init(hw.SampleRate());
 
     /* CV routing.  A static layout is just setting each channel once. */
     // cv_matrix.Jack(0).To(l_hi_level);
@@ -130,16 +134,15 @@ int main()
     presets.BootLoad();
 
     UpdateParams();
-    hw.StartAudio(condolences_dsp::Process);
+    hw.StartAudio(condolences::Process);
 
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
      * If desired, you can unroll and modify. */
-    loop
-        //.Use(pager)
-        //.Use(locks)
-        //.Use(settings)
+    loop.Use(pager)
+        .Use(locks)
+        .Use(settings)
         //.Use(cv_matrix)
-        //.Use(left_page)
+        .Use(left_page)
         //.Use(right_page)
         .OnFrame(UpdateParams);
 
