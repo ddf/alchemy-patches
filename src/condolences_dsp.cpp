@@ -17,9 +17,9 @@ namespace
   Smoother mix_;
 }
 
-void Init(float sample_rate)
+void Init(float sample_rate, size_t block_size)
 {
-  condolences_ = Condol::create(sample_rate);
+  condolences_ = Condol::create(sample_rate, block_size);
   condolences_->brightness() = 0.f;
   condolences_->spread() = 0.f;
   condolences_->spacing() = 1.f;

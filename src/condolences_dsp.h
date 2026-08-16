@@ -7,7 +7,7 @@
 namespace condolences
 {
  /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
-void Init(float sample_rate);
+void Init(float sample_rate, size_t block_size);
 
 /** Release resources */
 void DeInit();
