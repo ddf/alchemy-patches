@@ -41,7 +41,7 @@ static VirtualKnob l_mix = VirtualKnob(4, "Left Mix")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 static VirtualKnob l_feedback = VirtualKnob(5, "Left Feedback")
-  .Linear(0.f, 0.5f)
+  .Linear(0.f, 0.95f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 
@@ -112,7 +112,7 @@ static void UpdateParams()
 int main()
 {
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, 256);
-    condolences::Init(hw.SampleRate());
+    condolences::Init(hw.SampleRate(), hw.BlockSize());
 
     /* CV routing.  A static layout is just setting each channel once. */
     // cv_matrix.Jack(0).To(l_hi_level);
