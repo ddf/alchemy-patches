@@ -40,7 +40,7 @@ static VirtualKnob l_mix = VirtualKnob(4, "Left Mix")
   .Linear(0.f, 1.f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-static VirtualKnob l_feedback = VirtualKnob(5, "Left Feedback")
+static VirtualKnob l_melt = VirtualKnob(5, "Left Melt")
   .Linear(0.f, 0.95f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
@@ -79,7 +79,7 @@ static VirtualKnob l_feedback = VirtualKnob(5, "Left Feedback")
 // /* Bind knobs to page */
 static Page left_page  = Page(0).Knobs(l_density, l_decay,
                                        l_spacing, l_spread,
-                                       l_mix, l_feedback);
+                                       l_mix, l_melt);
 
 // static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
 //                                        r_mid_level, r_mid_freq,
@@ -104,7 +104,7 @@ static void UpdateParams()
   condolences::SetSpacing(l_spacing.Value());
   condolences::SetSpread(l_spread.Value());
   condolences::SetMix(l_mix.Value());
-  condolences::SetFeedback(l_feedback.Value());
+  condolences::SetMelt(l_melt.Value());
 
   condolences::Update();
 }
