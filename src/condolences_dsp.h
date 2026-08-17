@@ -17,7 +17,7 @@ void SetDecay(float value);
 void SetSpacing(float value);
 void SetSpread(float value);
 void SetMix(float value);
-void SetFeedback(float value);
+void SetMelt(float value);
 
 void Update();
 

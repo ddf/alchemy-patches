@@ -20,7 +20,7 @@ namespace
 void Init(float sample_rate, size_t block_size)
 {
   condolences_ = Condol::create(sample_rate, block_size);
-  condolences_->brightness() = 0.f;
+  condolences_->melt() = 0.f;
   condolences_->spread() = 0.f;
   condolences_->spacing() = 1.f;
   condolences_->density() = 0.2f;
@@ -61,9 +61,9 @@ void SetMix(float value)
   mix_ = value;
 }
 
-void SetFeedback(float value)
+void SetMelt(float value)
 {
-  condolences_->feedback() = value;
+  condolences_->melt() = value;
 }
 
 void Update()
