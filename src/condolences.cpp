@@ -99,10 +99,10 @@ static CvMatrix                          cv_matrix(kNumCvInputs);
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  condolences::SetDensity(l_density.Value());
+  condolences::SetDensity(0.5f);
   condolences::SetDecay(l_decay.Value());
   condolences::SetSpacing(l_spacing.Value());
-  //condolences::SetSpread(l_spread.Value());
+  condolences::SetSpread(l_density.Value());
   condolences::SetSmear(l_spread.Value());
   condolences::SetMix(l_mix.Value());
   condolences::SetMelt(l_melt.Value());
@@ -112,7 +112,7 @@ static void UpdateParams()
 
 int main()
 {
-    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, 256);
+    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_32KHZ, 256);
     condolences::Init(hw.SampleRate(), hw.BlockSize());
 
     /* CV routing.  A static layout is just setting each channel once. */

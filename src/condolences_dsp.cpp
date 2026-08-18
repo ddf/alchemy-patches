@@ -8,7 +8,7 @@
 namespace condolences
 {
   using SampleArray = vessl::array<float>;
-  using Condol = Condolences<float, 2048>;
+  using Condol = Condolences<float, 2048, 4>;
   using Smoother = vessl::math::easing::smoother<float>;
 // state
 namespace
@@ -22,6 +22,7 @@ void Init(float sample_rate, size_t block_size)
   condolences_ = Condol::create(sample_rate, block_size);
   condolences_->melt() = 0.f;
   condolences_->spread() = 0.f;
+  condolences_->smear() = 0.f;
   condolences_->spacing() = 1.f;
   condolences_->density() = 0.2f;
   condolences_->decay() = 1.f;
