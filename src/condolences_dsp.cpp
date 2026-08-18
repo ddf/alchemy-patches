@@ -8,13 +8,14 @@
 namespace condolences
 {
   using SampleArray = vessl::array<float>;
-  using Condol = Condolences<float, 2048, 4>;
+  using Condol = Condolences<float, SpectrumSize, Overlap>;
   using Smoother = vessl::math::easing::smoother<float>;
 // state
 namespace
 {
   Condol* condolences_;
   Smoother mix_;
+  float mix_raw_;
 }
 
 void Init(float sample_rate, size_t block_size)
@@ -24,12 +25,10 @@ void Init(float sample_rate, size_t block_size)
   condolences_->spread() = 0.f;
   condolences_->smear() = 0.f;
   condolences_->spacing() = 1.f;
-  condolences_->density() = 0.2f;
+  condolences_->density() = 512;
   condolences_->decay() = 1.f;
-  condolences_->feedback() = 0.f;
 
   mix_.value = 0.5f;
-  mix_.degree = 0.95f;
 }
 
 void DeInit()
@@ -64,7 +63,7 @@ void SetSmear(float value)
 
 void SetMix(float value)
 {
-  mix_ = value;
+  mix_raw_ = value;
 }
 
 void SetMelt(float value)
@@ -94,6 +93,8 @@ void Process(
   }
 
   condolences_->process(out_left, out_left);
+
+  mix_ = mix_raw_;
   
   float l,r;
   float m = mix_.value;
