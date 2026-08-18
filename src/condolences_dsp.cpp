@@ -68,7 +68,7 @@ void SetMix(float value)
 
 void SetMelt(float value)
 {
-  condolences_->melt() = value;
+  condolences_->melt() = value*0.98f;
 }
 
 void Update()
