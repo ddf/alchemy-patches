@@ -1,5 +1,6 @@
 #include "daisy_seed.h"
 #include "alchemy/hw/alchemy_lab.h"
+#include "alchemy/host_link/host.h"
 #include "alchemy/surface/control_loop.h"
 #include "alchemy/surface/cv_matrix.h"
 #include "alchemy/surface/page.h"
@@ -29,29 +30,29 @@ using namespace alchemy;
  * level keeps the knob declarations purely about the knob.  */
 
 /* Page 1 */
-static VirtualKnob l_density = VirtualKnob(0, "Left Density")
-  .Linear(0.f, 1.f)
+static VirtualKnob l_density = VirtualKnob(0, "Density")
+  .Linear(0.f, 1.f).Ident("density")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-static VirtualKnob l_decay = VirtualKnob(1, "Left Decay")
-  .Linear(0.05f, 10.f)
+static VirtualKnob l_decay = VirtualKnob(1, "Decay")
+  .Linear(0.05f, 10.f).Unit("s").Ident("decay")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-static VirtualKnob l_spacing = VirtualKnob(2, "Left Spacing")
+static VirtualKnob l_spacing = VirtualKnob(2, "Spacing")
+  .Linear(0.f, 1.f).Unit("exp -> lin").Ident("spacing")
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+
+static VirtualKnob l_smear = VirtualKnob(3, "Smear")
+  .Linear(0.f, 1.f).Ident("smear")
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+
+static VirtualKnob l_mix = VirtualKnob(4, "Mix")
+  .Linear(0.f, 1.f).Ident("mix")
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+
+static VirtualKnob l_melt = VirtualKnob(5, "Melt")
   .Linear(0.f, 1.f)
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
-
-static VirtualKnob l_smear = VirtualKnob(3, "Left Smear")
-  .Linear(0.f, 1.f)
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
-
-static VirtualKnob l_mix = VirtualKnob(4, "Left Mix")
-  .Linear(0.f, 1.f)
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
-
-static VirtualKnob l_melt = VirtualKnob(5, "Left Melt")
-  .Linear(0.f, 0.95f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 
@@ -87,9 +88,9 @@ static VirtualKnob l_melt = VirtualKnob(5, "Left Melt")
 //     .Ring(Level(kRightPalette.lo.freq, FillAnim::Pulse));
 
 // /* Bind knobs to page */
-static Page left_page  = Page(0).Knobs(l_density, l_decay,
-                                       l_spacing, l_smear,
-                                       l_mix, l_melt);
+static Page left_page  = Page(0).Name("Left").Knobs(l_density, l_decay,
+                                                    l_spacing, l_smear,
+                                                    l_mix,     l_melt);
 
 // static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
 //                                        r_mid_level, r_mid_freq,
@@ -105,6 +106,7 @@ static ParamLock<page_count * kNumPots>  locks   (hw.buttons[0], pager);
 static Presets                           presets (hw.seed.qspi);
 static Settings                          settings(hw, &pager);
 static CvMatrix                          cv_matrix(kNumCvInputs);
+static hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
@@ -143,11 +145,7 @@ int main()
     presets.Manage(pager);
     presets.Manage(locks);
     presets.Manage(settings);
-    presets.Init();
-    presets.BootLoad();
-
-    UpdateParams();
-    hw.StartAudio(condolences::Process);
+    presets.UseNames();
 
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
      * If desired, you can unroll and modify. */
@@ -157,7 +155,14 @@ int main()
         //.Use(cv_matrix)
         .Use(left_page)
         //.Use(right_page)
+        .Use(host)
         .OnFrame(UpdateParams);
+
+    presets.Init();
+    presets.BootLoad();
+
+    UpdateParams();
+    hw.StartAudio(condolences::Process);
 
     for (;;) loop.Tick();
 }
