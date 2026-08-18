@@ -11,8 +11,18 @@
 
 #include "condolences_dsp.h"
 #include "vessicle_palette.h"
+#include "vessl/vessl.h"
 
 using namespace alchemy;
+
+/** @todo
+  - choose min/max for density
+  - set spread_width based on density? 
+    could put spread_width on same knob with density, have spread param always at 1.
+  - try running in true stereo
+  - get hostlink working
+  - setup CV routing
+*/
 
 /* We define each knob's curve and LED Ring animation.  CV routing lives
  * in the CvMatrix declaration below; declaring it once at the matrix
@@ -32,7 +42,7 @@ static VirtualKnob l_spacing = VirtualKnob(2, "Left Spacing")
   .Linear(0.f, 1.f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-static VirtualKnob l_spread = VirtualKnob(3, "Left Spread")
+static VirtualKnob l_smear = VirtualKnob(3, "Left Smear")
   .Linear(0.f, 1.f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
@@ -78,7 +88,7 @@ static VirtualKnob l_melt = VirtualKnob(5, "Left Melt")
 
 // /* Bind knobs to page */
 static Page left_page  = Page(0).Knobs(l_density, l_decay,
-                                       l_spacing, l_spread,
+                                       l_spacing, l_smear,
                                        l_mix, l_melt);
 
 // static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
@@ -99,11 +109,13 @@ static CvMatrix                          cv_matrix(kNumCvInputs);
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  condolences::SetDensity(0.5f);
+  float density = vessl::math::lerp(32.f, 256.f, l_density.Value());
+  float spread  = vessl::math::lerp(0.35f, 1.f, l_density.Value());
+  condolences::SetDensity(density);
+  condolences::SetSpread(spread);
   condolences::SetDecay(l_decay.Value());
   condolences::SetSpacing(l_spacing.Value());
-  condolences::SetSpread(l_density.Value());
-  condolences::SetSmear(l_spread.Value());
+  condolences::SetSmear(l_smear.Value());
   condolences::SetMix(l_mix.Value());
   condolences::SetMelt(l_melt.Value());
 
