@@ -16,6 +16,7 @@ void SetDensity(float value);
 void SetDecay(float value);
 void SetSpacing(float value);
 void SetSpread(float value);
+void SetSmear(float value);
 void SetMix(float value);
 void SetMelt(float value);
 
