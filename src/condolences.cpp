@@ -102,7 +102,8 @@ static void UpdateParams()
   condolences::SetDensity(l_density.Value());
   condolences::SetDecay(l_decay.Value());
   condolences::SetSpacing(l_spacing.Value());
-  condolences::SetSpread(l_spread.Value());
+  //condolences::SetSpread(l_spread.Value());
+  condolences::SetSmear(l_spread.Value());
   condolences::SetMix(l_mix.Value());
   condolences::SetMelt(l_melt.Value());
 

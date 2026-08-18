@@ -56,6 +56,11 @@ void SetSpread(float value)
   condolences_->spread() = value;
 }
 
+void SetSmear(float value)
+{
+  condolences_->smear() = value;
+}
+
 void SetMix(float value)
 {
   mix_ = value;
@@ -73,7 +78,8 @@ void Update()
 void Process(
   daisy::AudioHandle::InputBuffer in, 
   daisy::AudioHandle::OutputBuffer out, 
-  size_t block_size)
+  size_t block_size
+)
 {
   SampleArray in_left(const_cast<float*>(in[0]), block_size);
   SampleArray in_right(const_cast<float*>(in[1]), block_size);
