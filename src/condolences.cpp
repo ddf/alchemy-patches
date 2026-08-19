@@ -108,10 +108,14 @@ static Settings                          settings(hw, &pager);
 static CvMatrix                          cv_matrix(kNumCvInputs);
 static hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
 
+constexpr float density_min = condolences::SpectrumSize / 64;
+constexpr float density_max = condolences::SpectrumSize / 8;
+
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  float density = vessl::math::lerp(32.f, 256.f, l_density.Value());
+
+  float density = vessl::math::lerp(density_min, density_max, l_density.Value());
   float spread  = vessl::math::lerp(0.35f, 1.f, l_density.Value());
   condolences::SetDensity(density);
   condolences::SetSpread(spread);

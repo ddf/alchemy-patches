@@ -6,8 +6,10 @@
 
 namespace condolences
 {
-static constexpr size_t SpectrumSize = 2048;
-static constexpr size_t Overlap = 4;
+// 1024 with overlap of 2 is best we can do in stereo for now.
+// would like to have an Overlap of at least four.
+static constexpr size_t SpectrumSize = 1024;
+static constexpr size_t Overlap = 2;
 
  /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
 void Init(float sample_rate, size_t block_size);
