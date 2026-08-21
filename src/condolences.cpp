@@ -13,15 +13,11 @@
 #include "condolences_dsp.h"
 #include "vessicle_palette.h"
 #include "vessl/vessl.h"
+#include <stdio.h>
 
 using namespace alchemy;
 
 /** @todo
-  - choose min/max for density
-  - set spread_width based on density? 
-    could put spread_width on same knob with density, have spread param always at 1.
-  - try running in true stereo
-  - get hostlink working
   - setup CV routing
 */
 
@@ -88,13 +84,62 @@ static VirtualKnob l_melt = VirtualKnob(5, "Melt")
 //     .Ring(Level(kRightPalette.lo.freq, FillAnim::Pulse));
 
 // /* Bind knobs to page */
-static Page left_page  = Page(0).Name("Left").Knobs(l_density, l_decay,
-                                                    l_spacing, l_smear,
-                                                    l_mix,     l_melt);
+static Page left_page  = Page(0).Name("Left").Knobs(
+  l_density, l_decay, l_spacing, l_smear, l_mix, l_melt
+);
 
 // static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
 //                                        r_mid_level, r_mid_freq,
 //                                        r_lo_level, r_lo_freq);
+
+constexpr float band_density_min = 16; // condolences::GetDensityMin();
+constexpr float band_density_max = condolences::GetDensityMax();
+
+struct DensitySettings : Serializable
+{
+  /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
+  float band_min = 0.0f;
+  float band_max = 1.0f;
+  float spread_min = 1.0f;
+  float spread_max = 0.25f;
+
+  size_t SerializedSize() const override { return 4u * sizeof(float); }
+
+  void Serialize(uint8_t* out) const override
+  {
+    std::memcpy(out + 0, &band_min, 4);
+    std::memcpy(out + 4, &band_max, 4);
+    std::memcpy(out + 8, &spread_min, 4);
+    std::memcpy(out + 12, &spread_max, 4);
+  }
+
+  bool Deserialize(const uint8_t* in) override
+  {
+    std::memcpy(&band_min, in + 0, 4);
+    std::memcpy(&band_max, in + 4, 4);
+    std::memcpy(&spread_min, in + 8, 4);
+    std::memcpy(&spread_max, in + 12, 4);
+    return true;
+  }
+
+  uint32_t SchemaHash() const override { return 0x54524D32u; /* 'TRM2' */ }
+
+  bool Describe(hostlink::ComponentWriter& w) const override
+  {
+    w.Label("Density Settings");
+    
+    char band_disp_json[64];
+    sprintf(band_disp_json, "{\"kind\":\"linear\",\"lo\":%d,\"hi\":%d}", 
+      static_cast<int>(band_density_min), static_cast<int>(band_density_max));
+
+    bool ok = w.Field("density.min", "Bands Min", 0, hostlink::FieldType::F32, 0.0f, band_disp_json);
+    ok &= w.Field("density.max", "Bands Max", 4, hostlink::FieldType::F32, 0.5f, band_disp_json);
+    ok &= w.Field("spread.min", "Spread Min", 8, hostlink::FieldType::F32, 1.0f);
+    ok &= w.Field("spread.max", "Spread Max", 12, hostlink::FieldType::F32, 0.f);
+
+    return ok;
+  }
+};
 
 constexpr size_t page_count = 1;
 
@@ -107,16 +152,17 @@ static Presets                           presets (hw.seed.qspi);
 static Settings                          settings(hw, &pager);
 static CvMatrix                          cv_matrix(kNumCvInputs);
 static hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
-
-constexpr float density_min = condolences::SpectrumSize / 64;
-constexpr float density_max = condolences::SpectrumSize / 8;
+static DensitySettings                   density_settings;
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-
-  float density = vessl::math::lerp(density_min, density_max, l_density.Value());
-  float spread  = vessl::math::lerp(0.35f, 1.f, l_density.Value());
+  float dt = l_density.Value();
+  float st = dt;
+  float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
+  float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
+  float density = vessl::math::interp<vessl::math::easing::quart::in>(dmin, dmax, dt);
+  float spread  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, st);
   condolences::SetDensity(density);
   condolences::SetSpread(spread);
   condolences::SetDecay(l_decay.Value());
@@ -125,13 +171,29 @@ static void UpdateParams()
   condolences::SetMix(l_mix.Value());
   condolences::SetMelt(l_melt.Value());
 
+  static constexpr float sample_freqs[6] = { 60.f, 120.f, 240.f, 480.f, 480.f*2, 480.f*3 };
+  for (uint8_t j = 0; j < kNumCvInputs; ++j)
+  {
+    float mag = condolences::GetInputBandMagnitude(sample_freqs[j]);
+    hw.cv_jacks[j].SetVolts(mag*5.f);
+  }
+
   condolences::Update();
 }
 
 int main()
 {
-    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_32KHZ, 256);
-    condolences::Init(hw.SampleRate(), hw.BlockSize());
+    // set block size exactly equal to the overlap for synthesis.
+    // this should mean we do exactly the same amount of work (generally speaking), every block.
+    size_t block_size = condolences::GetBlockSize();
+    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_32KHZ, block_size);
+    condolences::Init(hw.SampleRate());
+
+    /* Drive every switchable jack as a CV output (J3..J8). */
+    for (uint8_t j = 0; j < kNumCvInputs; ++j)
+    {
+      hw.cv_jacks[j].EnableCvOutput();
+    }
 
     /* CV routing.  A static layout is just setting each channel once. */
     // cv_matrix.Jack(0).To(l_hi_level);
@@ -147,6 +209,7 @@ int main()
 
     /* Preset payload — every Serializable surface gets walked on Save/Load. */
     presets.Manage(pager);
+    presets.Manage(density_settings);
     presets.Manage(locks);
     presets.Manage(settings);
     presets.UseNames();
