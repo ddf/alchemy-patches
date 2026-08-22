@@ -9,7 +9,7 @@
 #include "SpectralGenerator.h"
 
 using SampleArray = vessl::array<float>;
-using SpectralGen = SpectralGenerator<float, 4096>;
+using SpectralGen = SpectralGenerator<float, 4096, 4>;
 using WindowType = vessl::sample::windows::type;
 
 namespace vessicle_dsp
