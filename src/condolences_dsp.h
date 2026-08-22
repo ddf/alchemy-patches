@@ -7,12 +7,12 @@
 
 namespace condolences
 {
-static constexpr size_t SpectrumSize = 1024;
+static constexpr size_t SpectrumSize = 2048;
 static constexpr size_t Overlap = 4;
 
-constexpr size_t GetBlockSize() { return Condolences<float, SpectrumSize, Overlap>::generate_block_size; }
-constexpr float GetDensityMin() { return Condolences<float, SpectrumSize, Overlap>::density_min; }
-constexpr float GetDensityMax() { return Condolences<float, SpectrumSize, Overlap>::density_max; }
+constexpr size_t GetBlockSize() { return Condolences<float, SpectrumSize, Overlap>::GenerateBlockSize; }
+constexpr float GetDensityMin() { return Condolences<float, SpectrumSize, Overlap>::DensityMin; }
+constexpr float GetDensityMax() { return Condolences<float, SpectrumSize, Overlap>::DensityMax; }
 
  /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
 void Init(float sample_rate);
