@@ -32,7 +32,7 @@ static VirtualKnob l_density = VirtualKnob(0, "Density")
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
 static VirtualKnob l_decay = VirtualKnob(1, "Decay")
-  .Linear(0.05f, 10.f).Unit("s").Ident("decay")
+  .Exp(0.1f, 10.f).Unit("s").Ident("decay")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 static VirtualKnob l_spacing = VirtualKnob(2, "Spacing")
