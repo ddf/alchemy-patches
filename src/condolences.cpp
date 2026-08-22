@@ -92,16 +92,21 @@ static Page left_page  = Page(0).Name("Left").Knobs(
 //                                        r_mid_level, r_mid_freq,
 //                                        r_lo_level, r_lo_freq);
 
-constexpr float band_density_min = 16; // condolences::GetDensityMin();
+constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
 
 struct DensitySettings : Serializable
 {
+  static constexpr float band_min_default = (32.f - band_density_min) / (band_density_max - band_density_min);
+  static constexpr float band_max_default = (128.f - band_density_min) / (band_density_max - band_density_min);
+  static constexpr float spread_min_dafault = 1.0f;
+  static constexpr float spread_max_default = 1.0f;
+
   /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
-  float band_min = 0.0f;
-  float band_max = 1.0f;
-  float spread_min = 1.0f;
-  float spread_max = 0.25f;
+  float band_min = band_min_default;
+  float band_max = band_max_default;
+  float spread_min = spread_min_dafault;
+  float spread_max = spread_max_default;
 
   size_t SerializedSize() const override { return 4u * sizeof(float); }
 
@@ -132,10 +137,10 @@ struct DensitySettings : Serializable
     sprintf(band_disp_json, "{\"kind\":\"linear\",\"lo\":%d,\"hi\":%d}", 
       static_cast<int>(band_density_min), static_cast<int>(band_density_max));
 
-    bool ok = w.Field("density.min", "Bands Min", 0, hostlink::FieldType::F32, 0.0f, band_disp_json);
-    ok &= w.Field("density.max", "Bands Max", 4, hostlink::FieldType::F32, 0.5f, band_disp_json);
-    ok &= w.Field("spread.min", "Spread Min", 8, hostlink::FieldType::F32, 1.0f);
-    ok &= w.Field("spread.max", "Spread Max", 12, hostlink::FieldType::F32, 0.f);
+    bool ok = w.Field("density.min", "Bands Min", 0, hostlink::FieldType::F32, band_min_default, band_disp_json);
+    ok &= w.Field("density.max", "Bands Max", 4, hostlink::FieldType::F32, band_max_default, band_disp_json);
+    ok &= w.Field("spread.min", "Spread Min", 8, hostlink::FieldType::F32, spread_min_dafault);
+    ok &= w.Field("spread.max", "Spread Max", 12, hostlink::FieldType::F32, spread_max_default);
 
     return ok;
   }
@@ -161,7 +166,7 @@ static void UpdateParams()
   float st = dt;
   float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
   float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
-  float density = vessl::math::interp<vessl::math::easing::quart::in>(dmin, dmax, dt);
+  float density = vessl::math::lerp(dmin, dmax, dt);
   float spread  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, st);
   condolences::SetDensity(density);
   condolences::SetSpread(spread);

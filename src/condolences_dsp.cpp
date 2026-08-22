@@ -19,7 +19,7 @@ namespace
   float mix_raw_;
 }
 
-void Init(float sample_rate, size_t block_size)
+void Init(float sample_rate)
 {
   condolences_[0] = Condol::create(sample_rate);
   condolences_[1] = Condol::create(sample_rate);
