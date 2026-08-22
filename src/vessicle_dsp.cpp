@@ -68,9 +68,14 @@ void Process(
   SampleArray out_left(out[0], block_size);
   SampleArray out_right(out[1], block_size);
 
-
-  spectral_gen_->generate(out_left);
-  out_left.copy_to(out_right);
+  auto lw = out_left.make_writer();
+  auto rw = out_right.make_writer();
+  while(lw && rw)
+  {
+    float v = spectral_gen_->generate();
+    lw << v;
+    rw << v;
+  }
 }
 
 }
