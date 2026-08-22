@@ -99,7 +99,7 @@ struct DensitySettings : Serializable
 {
   static constexpr float band_min_default = (32.f - band_density_min) / (band_density_max - band_density_min);
   static constexpr float band_max_default = (128.f - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float spread_min_dafault = 1.0f;
+  static constexpr float spread_min_dafault = 0.0f;
   static constexpr float spread_max_default = 1.0f;
 
   /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
