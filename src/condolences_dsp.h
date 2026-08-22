@@ -7,43 +7,39 @@
 
 namespace condolences
 {
-/**
- * @todo 
- * we _can_ synthesize at 4096 (see: vessicle firmware),
- * but when loaded with that setting, the module crashes.
- * want to figure out if this is an out-of-memory thing,
- * or it's just plain too heavy with everything else we're doing. 
- */
+    /**
+     * @todo
+     * Try 4096 spectrum size after switching over to 16-bit fixed point processing.
+     */
+    static constexpr size_t SpectrumSize = 2048;
+    static constexpr size_t Overlap = 4;
 
-static constexpr size_t SpectrumSize = 2048;
-static constexpr size_t Overlap = 4;
+    constexpr size_t GetBlockSize() { return Condolences<float, SpectrumSize, Overlap>::GenerateBlockSize; }
+    constexpr float GetDensityMin() { return Condolences<float, SpectrumSize, Overlap>::DensityMin; }
+    constexpr float GetDensityMax() { return Condolences<float, SpectrumSize, Overlap>::DensityMax; }
 
-constexpr size_t GetBlockSize() { return Condolences<float, SpectrumSize, Overlap>::GenerateBlockSize; }
-constexpr float GetDensityMin() { return Condolences<float, SpectrumSize, Overlap>::DensityMin; }
-constexpr float GetDensityMax() { return Condolences<float, SpectrumSize, Overlap>::DensityMax; }
+    /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
+    void Init(float sample_rate);
 
- /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
-void Init(float sample_rate);
+    /** Release resources */
+    void DeInit();
 
-/** Release resources */
-void DeInit();
- 
-void SetDensity(float value);
-void SetDecay(float value);
-void SetSpacing(float value);
-void SetSpread(float value);
-void SetSmear(float value);
-void SetMix(float value);
-void SetMelt(float value);
+    void SetDensity(float value);
+    void SetDecay(float value);
+    void SetSpacing(float value);
+    void SetSpread(float value);
+    void SetSmear(float value);
+    void SetMix(float value);
+    void SetMelt(float value);
 
-float GetInputBandMagnitude(float freq);
+    float GetInputBandMagnitude(float freq);
 
-void Update();
+    void Update();
 
-/**
- * Audio callback.
- */
-void Process(daisy::AudioHandle::InputBuffer  in,
-             daisy::AudioHandle::OutputBuffer out,
-             size_t                           block_size);
+    /**
+     * Audio callback.
+     */
+    void Process(daisy::AudioHandle::InputBuffer in,
+                 daisy::AudioHandle::OutputBuffer out,
+                 size_t block_size);
 } // namespace condolences_dsp

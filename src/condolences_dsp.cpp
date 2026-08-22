@@ -14,6 +14,19 @@ namespace condolences
 // state
 namespace
 {
+  /** @todo
+   * allocate all memory for Condolences instances from here instead of using create.
+   * embed some of it in the binary for faster access.
+   * goal would be to get us running with spectrum size 4096 and overlap 4.
+   * 
+   * there is room for the signal arrays required by vessl::spectral if we work in 16-bit fixed point.
+   * however, to do this we will need to add 16-bit fixed point support to vessl,
+   * and then add overloads for the 16-bit ARM DSP transforms.
+   * It would be a good feature add to vessl, so I think worth doing at some point.
+   */
+  //int16_t __attribute__((section(".text"))) data0[SpectrumSize*Overlap*2];
+  //int16_t __attribute__((section(".text"))) data1[SpectrumSize*Overlap*2];
+
   Condol* condolences_[2];
   Smoother mix_;
   float mix_raw_;
@@ -21,6 +34,9 @@ namespace
 
 void Init(float sample_rate)
 {
+  //memset(data0, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
+  //memset(data1, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
+
   condolences_[0] = Condol::create(sample_rate);
   condolences_[1] = Condol::create(sample_rate);
 
@@ -71,7 +87,7 @@ void SetMelt(float value)
 
 float GetInputBandMagnitude(float freq)
 {
-    return condolences_[0]->get_input_band_magnitude(freq);
+  return condolences_[0]->get_input_band_magnitude(freq);
 }
 
 void SetMix(float value)
@@ -93,12 +109,6 @@ void Process(
   SampleArray in_right(const_cast<float*>(in[1]), block_size);
   SampleArray out_left(out[0], block_size);
   SampleArray out_right(out[1], block_size);
-
-  // // mixdown to mono, for now
-  // for(size_t i = 0; i < block_size; ++i)
-  // {
-  //   out_left[i] = (in_left[i]+in_right[i])*0.5f;
-  // }
 
   condolences_[0]->process(in_left, out_left);
   condolences_[1]->process(in_right, out_right);
