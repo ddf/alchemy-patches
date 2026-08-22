@@ -7,6 +7,14 @@
 
 namespace condolences
 {
+/**
+ * @todo 
+ * we _can_ synthesize at 4096 (see: vessicle firmware),
+ * but when loaded with that setting, the module crashes.
+ * want to figure out if this is an out-of-memory thing,
+ * or it's just plain too heavy with everything else we're doing. 
+ */
+
 static constexpr size_t SpectrumSize = 2048;
 static constexpr size_t Overlap = 4;
 
