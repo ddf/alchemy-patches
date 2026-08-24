@@ -8,8 +8,7 @@
 namespace condolences
 {
     /**
-     * @todo
-     * Try 4096 spectrum size after switching over to 16-bit fixed point processing.
+     * @todo try 4096 spectrum size after switching over to 16-bit fixed point processing.
      */
     static constexpr size_t SpectrumSize = 2048;
     static constexpr size_t Overlap = 4;
@@ -25,12 +24,12 @@ namespace condolences
     void DeInit();
 
     void SetDensity(float value);
+    void SetSpread(float value);
     void SetDecay(float value);
     void SetSpacing(float value);
-    void SetSpread(float value);
+    void SetMelt(float value);
     void SetSmear(float value);
     void SetMix(float value);
-    void SetMelt(float value);
 
     float GetInputBandMagnitude(float freq);
 
