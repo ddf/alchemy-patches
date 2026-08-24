@@ -14,8 +14,8 @@ namespace condolences
 // state
 namespace
 {
-  /** @todo
-   * allocate all memory for Condolences instances from here instead of using create.
+  /** 
+   * @todo allocate all memory for Condolences instances from here instead of using create.
    * embed some of it in the binary for faster access.
    * goal would be to get us running with spectrum size 4096 and overlap 4.
    * 

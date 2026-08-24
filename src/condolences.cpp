@@ -17,37 +17,60 @@
 
 using namespace alchemy;
 
-/** @todo
-  - setup CV routing
-*/
+/**
+ * Definitely:
+ *  @todo setup CV routing
+ *  @todo use clip indicator
+ *  @todo limiting on the output
+ *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
+ *  @todo update to SDK 0.10.0 and implement Help documentation 
+ * 
+ * Maybe and/or later:
+ *  @todo generated audio feedback path
+ *  @todo add pre-delay?
+ *  @todo add skew per parameter, or just for density & spacing?
+ *  @todo second page for totally independent control of right channel?
+ *        - or follow echoa design where knob columns are left/right on each page.
+ *        - could do a setting where either the knobs operate independently
+ *          or the left column is parameters and the right column is skew for each param.
+ *  @todo parameter for smear LFO speed and depth?
+ *  @todo parameter for blending between exponential decay and linear decay?
+ *  @todo second page could be "sub" parameters of what's on the first page, so:
+ *        - density -> spread
+ *        - decay -> exp to lin
+ *        - warp -> compress (reduce size of mapped to range in the sympathies)
+ *        - smear -> LFO speed
+ *        - melt -> LFO depth or maybe larger jump to band below?
+ *        - mix -> control over crossfade curve 
+ */
 
 /* We define each knob's curve and LED Ring animation.  CV routing lives
  * in the CvMatrix declaration below; declaring it once at the matrix
  * level keeps the knob declarations purely about the knob.  */
 
 /* Page 1 */
-static VirtualKnob l_density = VirtualKnob(0, "Density")
+static VirtualKnob vk_density = VirtualKnob(0, "Density")
   .Linear(0.f, 1.f).Ident("density")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-static VirtualKnob l_decay = VirtualKnob(1, "Decay")
+static VirtualKnob vk_decay = VirtualKnob(2, "Decay")
   .Exp(0.1f, 10.f).Unit("s").Ident("decay")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-static VirtualKnob l_spacing = VirtualKnob(2, "Spacing")
-  .Linear(0.f, 1.f).Unit("exp -> lin").Ident("spacing")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
-
-static VirtualKnob l_smear = VirtualKnob(3, "Smear")
-  .Linear(0.f, 1.f).Ident("smear")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
-
-static VirtualKnob l_mix = VirtualKnob(4, "Mix")
+static VirtualKnob vk_mix = VirtualKnob(4, "Mix")
   .Linear(0.f, 1.f).Ident("mix")
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
-static VirtualKnob l_melt = VirtualKnob(5, "Melt")
+static VirtualKnob vk_spacing = VirtualKnob(1, "Warp")
+  .Linear(0.f, 1.f).Ident("warp")
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+
+static VirtualKnob vk_smear = VirtualKnob(3, "Smear")
+  .Linear(0.f, 1.f).Ident("smear")
+  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+
+static VirtualKnob vk_melt = VirtualKnob(5, "Melt")
   .Linear(0.f, 1.f)
   .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
 
@@ -85,7 +108,7 @@ static VirtualKnob l_melt = VirtualKnob(5, "Melt")
 
 // /* Bind knobs to page */
 static Page left_page  = Page(0).Name("Left").Knobs(
-  l_density, l_decay, l_spacing, l_smear, l_mix, l_melt
+  vk_density, vk_decay, vk_spacing, l_smear, vk_mix, vk_melt
 );
 
 // static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
@@ -162,7 +185,7 @@ static DensitySettings                   density_settings;
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  float dt = l_density.Value();
+  float dt = vk_density.Value();
   float st = dt;
   float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
   float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
@@ -170,11 +193,11 @@ static void UpdateParams()
   float spread  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, st);
   condolences::SetDensity(density);
   condolences::SetSpread(spread);
-  condolences::SetDecay(l_decay.Value());
-  condolences::SetSpacing(l_spacing.Value());
+  condolences::SetDecay(vk_decay.Value());
+  condolences::SetSpacing(vk_spacing.Value());
   condolences::SetSmear(l_smear.Value());
-  condolences::SetMix(l_mix.Value());
-  condolences::SetMelt(l_melt.Value());
+  condolences::SetMix(vk_mix.Value());
+  condolences::SetMelt(vk_melt.Value());
 
   static constexpr float sample_freqs[6] = { 60.f, 120.f, 240.f, 480.f, 480.f*2, 480.f*3 };
   for (uint8_t j = 0; j < kNumCvInputs; ++j)
