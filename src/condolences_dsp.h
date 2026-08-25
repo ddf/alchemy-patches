@@ -18,6 +18,8 @@ namespace condolences
         TrueStereo,   // left/right sent to dedicated processors output as a stereo pair
         ParallelMono, // left/right summed to mono, which is sent to both processors output as a stereo pair
         SeriesMono,   // left/right summed to mono, sent thru both processors in series, output as mono
+
+        Count
     };
 
     constexpr size_t GetBlockSize() { return Condolences<float, SpectrumSize, Overlap>::GenerateBlockSize; }
