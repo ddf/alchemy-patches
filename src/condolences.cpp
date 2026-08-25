@@ -9,9 +9,11 @@
 #include "alchemy/surface/presets.h"
 #include "alchemy/surface/settings.h"
 #include "alchemy/surface/virtual_knob.h"
+#include "alchemy/surface/virtual_button.h"
+#include "alchemy/surface/button_bank.h"
 
 #include "condolences_dsp.h"
-#include "vessicle_palette.h"
+#include "condolences_gui.h"
 #include "vessl/vessl.h"
 #include <stdio.h>
 
@@ -40,215 +42,7 @@ using namespace alchemy;
  *        - mix -> control over crossfade curve 
  */
 
-/* We define each knob's curve and LED Ring animation.  CV routing lives
- * in the CvMatrix declaration below; declaring it once at the matrix
- * level keeps the knob declarations purely about the knob.  */
-
- DEFINE_VESSICLE_COLOR(skew_color_right, 3300CC)
- DEFINE_VESSICLE_COLOR(skew_color_left,  CC0033)
- DEFINE_VESSICLE_COLOR(skew_color_center, FF00FF)
- DEFINE_VESSICLE_COLOR(skew_color_back, 080008)
-
-static Level vibe_spec = Level(vessicle::palette::Fuschia.active.rgb, FillAnim::Pulse);
-  //.Passive(vessicle::palette::Fuschia.passive.rgb);
-
-static Level rizz_spec = Level(vessicle::palette::Lime.active.rgb, FillAnim::Ripple)
-  .Passive(vessicle::palette::Lime.passive.rgb);
-
-static Bipolar skew_spec = Bipolar(
-  skew_color_right.rgb,
-  skew_color_left.rgb,
-  skew_color_center.rgb
-);
-
-static constexpr float skew_max    = 0.5f;
-static constexpr float skew_detent = 0.05f;
-
-static float GetSkewValue(const VirtualKnob& fromKnob)
-{
-  float value = vessl::math::abs(fromKnob.Value());
-  float sign  = fromKnob.Value() > 0 ? 1.f : -1.f;
-  float d = value - skew_detent;
-  return d < 0 ? 0.f : vessl::math::lerp(0.f, skew_max*sign, d / (skew_max - skew_detent));
-}
-
-static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
-  .Linear(0.f, 1.f).Ident("density.left")
-  .Ring(vibe_spec);
-
-static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
-  .Linear(0.f, 1.f).Ident("density.right")
-  .Ring(vibe_spec);
-
-// in seconds, sensible minimum value depends on spectrum size and sample rate
-static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
-  .Exp(0.1f, 10.f).Unit("s").Ident("decay.left")
-  .Ring(vibe_spec);
-
-static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
-  .Exp(0.1f, 10.f).Unit("s").Ident("decay.right")
-  .Ring(vibe_spec);
-
-static VirtualKnob vk_mix_l = VirtualKnob(kPotBottomLeft, "Mix Left")
-  .Linear(0.f, 1.f).Ident("mix.left")
-  .Ring(vibe_spec);
-
-static VirtualKnob vk_mix_r = VirtualKnob(kPotBottomRight, "Mix Right")
-  .Linear(0.f, 1.f).Ident("mix.right")
-  .Ring(vibe_spec);
-
-static VirtualKnob vk_warp_l = VirtualKnob(kPotTopLeft, "Warp Left")
-  .Linear(0.f, 1.f).Ident("warp.left")
-  .Ring(rizz_spec);
-
-static VirtualKnob vk_warp_r = VirtualKnob(kPotTopRight, "Warp Right")
-  .Linear(0.f, 1.f).Ident("warp.right")
-  .Ring(rizz_spec);
-
-static VirtualKnob vk_smear_l = VirtualKnob(kPotMiddleLeft, "Smear Left")
-  .Linear(0.f, 1.f).Ident("smear.left")
-  .Ring(rizz_spec);
-
-static VirtualKnob vk_smear_r = VirtualKnob(kPotMiddleRight, "Smear Right")
-  .Linear(0.f, 1.f).Ident("smear.right")
-  .Ring(rizz_spec);
-
-static VirtualKnob vk_melt_l = VirtualKnob(kPotBottomLeft, "Melt Left")
-  .Linear(0.f, 1.f).Ident("melt.left")
-  .Ring(rizz_spec);
-
-static VirtualKnob vk_melt_r = VirtualKnob(kPotBottomRight, "Melt Right")
-  .Linear(0.f, 1.f).Ident("melt.right")
-  .Ring(rizz_spec);
-
-///////////////////////////////////////////////////////////////////////
-static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Density Skew")
-  .Ident("density.skew")
-  .Linear(-0.5f, 0.5f)
-  .Ring(skew_spec);
-
-static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Decay Skew")
-  .Ident("decay.skew")
-  .Linear(-0.5f, 0.5f)
-  .Ring(skew_spec);
-
-static VirtualKnob vk_mix_skew = VirtualKnob(kPotBottomLeft, "Mix Skew")
-  .Ident("mix.skew")
-  .Linear(-0.5f, 0.5f)
-  .Ring(skew_spec);
-
-static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
-  .Ident("warp.skew")
-  .Linear(-0.5f, 0.5f)
-  .Ring(skew_spec);
-  
-static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
-  .Ident("smear.skew")
-  .Linear(-0.5f, 0.5f)
-  .Ring(skew_spec);
-
-static VirtualKnob vk_melt_skew = VirtualKnob(kPotBottomRight, "Melt Skew")
-  .Ident("melt.skew")
-  .Linear(-0.5f, 0.5f)
-  .Ring(skew_spec);
-
-static void DrawKnobWithSkew(
-  LedPanel& panel, uint8_t pot,
-  const ArcGeometry& geo, float norm,
-  uint32_t t_ms, void* ctx
-)
-{
-  VirtualKnob* skew_knob = static_cast<VirtualKnob*>(ctx);
-  const float skew_val = GetSkewValue(*skew_knob);
-  
-  FillDesc over_right;
-  over_right.center_color = { 0u, 0u, 0u };
-  over_right.compose = FillCompose::Replace;
-  over_right.mode = FillMode::Center;
-  over_right.color = skew_color_right.rgb;
-  over_right.neg_color = skew_color_right.rgb;
-  over_right.pivot01 = norm;
-
-  FillDesc over_left;
-  over_left.center_color = { 0u, 0u, 0u };
-  over_left.compose = FillCompose::Overlay;
-  over_left.mode = FillMode::Center;
-  over_left.color = skew_color_left.rgb;
-  over_left.neg_color = skew_color_left.rgb;
-  over_left.pivot01 = norm;
-
-  PipDesc center;
-  center.color = skew_color_center.rgb;
-  center.background = { 0u, 0u, 0u }; // skew_color_back.rgb;
-  center.compose = PipCompose::Add;
-  center.smooth = true;
-
-  PipDesc bottom;
-  bottom.color = skew_val == 0 ? skew_color_center.rgb :
-                 skew_val > 0 ? skew_color_right.rgb : skew_color_left.rgb;
-  bottom.blink_hz = skew_val == 0 ? 0.f : 2.f;                   
-
-  RingFrame f;
-  f.Begin(geo);
-  f.Base(over_right, norm + skew_val, t_ms);
-  f.Pip(Region::BottomPip, bottom, 0.f, 1.f, t_ms);
-  f.Emit(panel, pot);
-
-  RingFrame g;
-  g.BeginOverlay(geo);
-  g.Base(over_left, norm - skew_val, t_ms);
-  g.Pip(Region::Full, center, norm, 1.f, t_ms);
-  g.Emit(panel, pot);
-}
-
-static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Density")
-  .Ident("density.both")
-  .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
-
-// in seconds, sensible minimum value depends on spectrum size and sample rate
-static VirtualKnob vk_decay = VirtualKnob(kPotMiddleLeft, "Decay")
-  .Ident("decay.both")
-  .Exp(0.1f, 10.f).Unit("s")
-  .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
-
-static VirtualKnob vk_mix = VirtualKnob(kPotBottomLeft, "Mix")
-  .Ident("mix.both")
-  .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_mix_skew));
-
-static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
-  .Ident("warp.both")
-  .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_warp_skew));
-  
-static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
-  .Ident("smear.both")
-  .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
-
-static VirtualKnob vk_melt = VirtualKnob(kPotBottomRight, "Melt")
-  .Ident("melt.both")
-  .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_melt_skew));
-
-// /* Bind knobs to page */
-static Page left_page  = Page(0).Name("Left")
-  .Color(vessicle::palette::Fuschia.active.hex)
-  .Knobs(vk_density_l, vk_density_r, vk_decay_l, vk_decay_r, vk_mix_l, vk_mix_r);
-
-static Page right_page = Page(1).Name("Right")
-  .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_warp_l, vk_warp_r, vk_smear_l, vk_smear_r, vk_melt_l, vk_melt_r);
-
-static Page vibe_page = Page(0).Name("Vibe")
-  .Color(vessicle::palette::Fuschia.active.hex)
-  .Knobs(vk_density, vk_decay, vk_mix, vk_warp, vk_melt, vk_smear);
-
-static Page rizz_page = Page(1).Name("Rizz")
-  .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_density_skew, vk_decay_skew, vk_mix_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew);
-
+ 
 constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
 
@@ -305,17 +99,175 @@ struct DensitySettings : Serializable
 
 constexpr size_t page_count = 2;
 
-/* Get our SDK surfaces and opt in to everything */
-static AlchemyLab                        hw;
-static ControlLoop                       loop    (hw);
-static Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
-static ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
-static Presets                           presets (hw.seed.qspi);
-static Settings                          settings(hw, &pager);
-static CvMatrix                          cv_matrix(kNumCvInputs);
-static hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
-static DensitySettings                   density_settings;
+/* Get our SDK surfaces and opt in to everything.
+ * Not declared static so condolences_gui.h can reference hw and pager.
+ */
+AlchemyLab                        hw;
+ControlLoop                       loop    (hw);
+Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
+ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
+Presets                           presets (hw.seed.qspi);
+Settings                          settings(hw, &pager);
+CvMatrix                          cv_matrix(kNumCvInputs);
+hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
+DensitySettings                   density_settings;
 
+static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
+  .Linear(0.f, 1.f).Ident("density.left")
+  .Ring(vibe_spec);
+
+static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
+  .Linear(0.f, 1.f).Ident("density.right")
+  .Ring(vibe_spec);
+
+// in seconds, sensible minimum value depends on spectrum size and sample rate
+static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
+  .Exp(0.1f, 10.f).Unit("s").Ident("decay.left")
+  .Ring(vibe_spec);
+
+static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
+  .Exp(0.1f, 10.f).Unit("s").Ident("decay.right")
+  .Ring(vibe_spec);
+
+static VirtualKnob vk_mix_l = VirtualKnob(kPotBottomLeft, "Mix Left")
+  .Linear(0.f, 1.f).Ident("mix.left")
+  .Ring(vibe_spec);
+
+static VirtualKnob vk_mix_r = VirtualKnob(kPotBottomRight, "Mix Right")
+  .Linear(0.f, 1.f).Ident("mix.right")
+  .Ring(vibe_spec);
+
+static VirtualKnob vk_warp_l = VirtualKnob(kPotTopLeft, "Warp Left")
+  .Linear(0.f, 1.f).Ident("warp.left")
+  .Ring(rizz_spec);
+
+static VirtualKnob vk_warp_r = VirtualKnob(kPotTopRight, "Warp Right")
+  .Linear(0.f, 1.f).Ident("warp.right")
+  .Ring(rizz_spec);
+
+static VirtualKnob vk_smear_l = VirtualKnob(kPotMiddleLeft, "Smear Left")
+  .Linear(0.f, 1.f).Ident("smear.left")
+  .Ring(rizz_spec);
+
+static VirtualKnob vk_smear_r = VirtualKnob(kPotMiddleRight, "Smear Right")
+  .Linear(0.f, 1.f).Ident("smear.right")
+  .Ring(rizz_spec);
+
+static VirtualKnob vk_melt_l = VirtualKnob(kPotBottomLeft, "Melt Left")
+  .Linear(0.f, 1.f).Ident("melt.left")
+  .Ring(rizz_spec);
+
+static VirtualKnob vk_melt_r = VirtualKnob(kPotBottomRight, "Melt Right")
+  .Linear(0.f, 1.f).Ident("melt.right")
+  .Ring(rizz_spec);
+
+///////////////////////////////////////////////////////////////////////
+// Skew Knobs
+static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Density Skew")
+  .Ident("density.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_density_skew));
+
+static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Decay Skew")
+  .Ident("decay.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
+
+static VirtualKnob vk_mix_skew = VirtualKnob(kPotBottomLeft, "Mix Skew")
+  .Ident("mix.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_mix_skew));
+
+static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
+  .Ident("warp.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_warp_skew));
+  
+static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
+  .Ident("smear.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_smear_skew));
+
+static VirtualKnob vk_melt_skew = VirtualKnob(kPotBottomRight, "Melt Skew")
+  .Ident("melt.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_melt_skew));
+
+/////////////////////////////////////////////////////////////////////////
+// Param Knobs which get skewed
+static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Density")
+  .Ident("density.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
+
+// in seconds, sensible minimum value depends on spectrum size and sample rate
+static VirtualKnob vk_decay = VirtualKnob(kPotMiddleLeft, "Decay")
+  .Ident("decay.both")
+  .Exp(0.1f, 10.f).Unit("s")
+  .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
+
+static VirtualKnob vk_mix = VirtualKnob(kPotBottomLeft, "Mix")
+  .Ident("mix.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_mix_skew));
+
+static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
+  .Ident("warp.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_warp_skew));
+  
+static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
+  .Ident("smear.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
+
+static VirtualKnob vk_melt = VirtualKnob(kPotBottomRight, "Melt")
+  .Ident("melt.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_melt_skew));
+
+// /* Bind knobs to page */
+static Page left_page  = Page(0).Name("Left")
+  .Color(vessicle::palette::Fuschia.active.hex)
+  .Knobs(vk_density_l, vk_density_r, vk_decay_l, vk_decay_r, vk_mix_l, vk_mix_r);
+
+static Page right_page = Page(1).Name("Right")
+  .Color(vessicle::palette::Lime.active.hex)
+  .Knobs(vk_warp_l, vk_warp_r, vk_smear_l, vk_smear_r, vk_melt_l, vk_melt_r);
+
+static Page vibe_page = Page(0).Name("Vibe")
+  .Color(vessicle::palette::Fuschia.active.hex)
+  .Knobs(vk_density, vk_decay, vk_mix, vk_warp, vk_melt, vk_smear);
+
+static Page rizz_page = Page(1).Name("Rizz")
+  .Color(vessicle::palette::Lime.active.hex)
+  .Knobs(vk_density_skew, vk_decay_skew, vk_mix_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew);
+
+//////////////////////////////////////////////////////////////////////
+// button, button, whose got the button?
+static VirtualButton vb_shift = VirtualButton(kButtonB2, "Shift")
+  .Ident("btn.shift");
+
+static ButtonBank buttons;
+
+static void OnPoll(uint32_t t_ms)
+{
+  if (pager.Page() == 0 && IsShiftPressed())
+  {
+    SetShiftEnabled(true);
+    pager.GoToPage(1, loop.Phys());
+  }
+  else if (pager.Page() == 1 && IsShiftEnabled() && !IsShiftPressed())
+  {
+    SetShiftEnabled(false);
+    pager.GoToPage(0, loop.Phys());
+  }
+
+  if (IsShiftEnabled())
+  {
+    pager.ConsumeButton();
+  }
+}
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
@@ -402,6 +354,8 @@ int main()
     // cv_matrix.Jack(4).To(l_lo_level);
     // cv_matrix.Jack(5).To(l_lo_freq);
 
+    buttons.Global(vb_shift);
+
     /* Opting into default settings gestures and controls.*/
     settings.UseBrightness();
     settings.UsePresets(presets);
@@ -411,17 +365,20 @@ int main()
     presets.Manage(locks);
     presets.Manage(settings);
     presets.Manage(density_settings);
+    //presets.Manage(buttons);
     presets.UseNames();
 
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
      * If desired, you can unroll and modify. */
     loop.Use(pager)
+        .Use(buttons)
         .Use(locks)
         .Use(settings)
         //.Use(cv_matrix)
         .Use(vibe_page)
         .Use(rizz_page)
         .Use(host)
+        .OnPoll(OnPoll)
         .OnFrame(UpdateParams);
 
     presets.Init();
