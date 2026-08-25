@@ -25,9 +25,7 @@ using namespace alchemy;
  *  @todo use clip indicator
  *  @todo limiting on the output
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
- *  @todo implement Help documentation 
- *  @todo add gesture with B2 for adjusting skew from the first page (essentially a shift function)
- *  @todo change skew rendering to use two pips, unique colors for each that blend to the main color when added.
+ *  @todo implement Help documentation
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
@@ -41,8 +39,22 @@ using namespace alchemy;
  *        - melt -> LFO depth or maybe larger jump to band below?
  *        - mix -> control over crossfade curve 
  */
+constexpr size_t page_count = 2;
 
- 
+/* Get our SDK surfaces and opt in to everything.
+ * Not declared static so condolences_gui.h can reference hw and pager.
+ */
+AlchemyLab                        hw;
+ControlLoop                       loop    (hw);
+Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
+ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
+Presets                           presets (hw.seed.qspi);
+Settings                          settings(hw, &pager);
+CvMatrix                          cv_matrix(kNumCvInputs);
+hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
+
+////////////////////////////////////////////////////////////////////////////////
+// Settings
 constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
 
@@ -97,21 +109,26 @@ struct DensitySettings : Serializable
   }
 };
 
-constexpr size_t page_count = 2;
+static DensitySettings density_settings;
 
-/* Get our SDK surfaces and opt in to everything.
- * Not declared static so condolences_gui.h can reference hw and pager.
- */
-AlchemyLab                        hw;
-ControlLoop                       loop    (hw);
-Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
-ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
-Presets                           presets (hw.seed.qspi);
-Settings                          settings(hw, &pager);
-CvMatrix                          cv_matrix(kNumCvInputs);
-hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
-DensitySettings                   density_settings;
+constexpr uint8_t mode_page = 0;
+constexpr uint8_t mode_pot  = kPotTopRight;
+constexpr uint8_t mode_count = static_cast<uint8_t>(condolences::Mode::Count);
+constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
 
+static void ConfigureSettings()
+{
+  settings.UseBrightness();
+  settings.UsePresets(presets);
+  settings.Page(mode_page)
+          .Name("Config")
+          .Pot(kPotTopRight)
+          .Selector(mode_labels)
+          .Ident("config.mode");
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Knobs
 static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
   .Linear(0.f, 1.f).Ident("density.left")
   .Ring(vibe_spec);
@@ -262,11 +279,6 @@ static void OnPoll(uint32_t t_ms)
     SetShiftEnabled(false);
     pager.GoToPage(0, loop.Phys());
   }
-
-  if (IsShiftEnabled())
-  {
-    pager.ConsumeButton();
-  }
 }
 
 /* summed CV+knob values → DSP each frame */
@@ -329,6 +341,8 @@ static void UpdateParams()
     condolences::SetMelt(vk_melt_l.Value(), vk_melt_r.Value());
   }
 
+  condolences::Mode mode = static_cast<condolences::Mode>(settings.SelectorIdxAt(mode_page, mode_pot));
+  condolences::SetMode(mode);
   condolences::Update();
 }
 
@@ -357,8 +371,7 @@ int main()
     buttons.Global(vb_shift);
 
     /* Opting into default settings gestures and controls.*/
-    settings.UseBrightness();
-    settings.UsePresets(presets);
+    ConfigureSettings();
 
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);

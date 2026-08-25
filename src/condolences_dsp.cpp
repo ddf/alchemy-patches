@@ -130,7 +130,7 @@ void Process(
     case Mode::ParallelMono:
     {
       in_left.copy_to(out_left);
-      out_left.add(out_right);
+      out_left.add(in_right).scale(0.5f);
       condolences_[1]->process(out_left, out_right);
       condolences_[0]->process(out_left, out_left);
     }
@@ -139,12 +139,15 @@ void Process(
     case Mode::SeriesMono:
     {
       in_left.copy_to(out_left);
-      out_left.add(out_right);
+      out_left.add(in_right).scale(0.5f);
       condolences_[0]->process(out_left, out_left);
+      out_left.scale(0.5f);
       condolences_[1]->process(out_left, out_left);
       out_left.copy_to(out_right);
     }
     break;
+
+    default: break;
   }
 
   mix_smooth_[0] = mix_[0];
