@@ -50,6 +50,12 @@ void DeInit()
   Condol::destroy(condolences_[1]);
 }
 
+
+void SetMode(Mode m)
+{
+  mode_ = m;
+}
+
 void SetDensity(float x, float y)
 {
   condolences_[0]->density() = x;
@@ -64,36 +70,32 @@ void SetDecay(float x, float y)
 
 void SetSpacing(float x, float y)
 {
-  condolences_[0]->spacing() = x;
-  condolences_[1]->spacing() = y;
+  condolences_[0]->spacing() = vessl::math::clamp_delta(x);
+  condolences_[1]->spacing() = vessl::math::clamp_delta(y);
 }
 
 void SetSpread(float x, float y)
 {
-  condolences_[0]->spread() = x;
-  condolences_[1]->spread() = y;
+  condolences_[0]->spread() = vessl::math::clamp_delta(x);
+  condolences_[1]->spread() = vessl::math::clamp_delta(y);
 }
 
 void SetSmear(float x, float y)
 {
-  condolences_[0]->smear() = x;
-  condolences_[1]->smear() = y;
-}
-
-void SetMode(Mode m)
-{
+  condolences_[0]->smear() = vessl::math::clamp_delta(x);
+  condolences_[1]->smear() = vessl::math::clamp_delta(y);
 }
 
 void SetMelt(float x, float y)
 {
-  condolences_[0]->melt() = x*0.98f;
-  condolences_[1]->melt() = y*0.98f;
+  condolences_[0]->melt() = vessl::math::clamp_delta(x)*0.98f;
+  condolences_[1]->melt() = vessl::math::clamp_delta(y)*0.98f;
 }
 
 void SetMix(float x, float y)
 {
-  mix_[0] = x;
-  mix_[1] = y;
+  mix_[0] = vessl::math::clamp_delta(x);
+  mix_[1] = vessl::math::clamp_delta(y);
 }
 
 float GetInputBandMagnitude(float freq)
