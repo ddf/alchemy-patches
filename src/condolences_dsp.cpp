@@ -19,7 +19,7 @@ namespace
    * embed some of it in the binary for faster access.
    * goal would be to get us running with spectrum size 4096 and overlap 4.
    * 
-   * there is room for the signal arrays required by vessl::spectral if we work in 16-bit fixed point.
+   * @todo there is room for the signal arrays required by vessl::spectral if we work in 16-bit fixed point.
    * however, to do this we will need to add 16-bit fixed point support to vessl,
    * and then add overloads for the 16-bit ARM DSP transforms.
    * It would be a good feature add to vessl, so I think worth doing at some point.
@@ -28,8 +28,9 @@ namespace
   //int16_t __attribute__((section(".text"))) data1[SpectrumSize*Overlap*2];
 
   Condol* condolences_[2];
-  Smoother mix_;
-  float mix_raw_;
+  Mode mode_;
+  Smoother mix_smooth_[2];
+  float mix_[2];
 }
 
 void Init(float sample_rate)
@@ -40,7 +41,7 @@ void Init(float sample_rate)
   condolences_[0] = Condol::create(sample_rate);
   condolences_[1] = Condol::create(sample_rate);
 
-  mix_.value = 0.5f;
+  mode_ = Mode::TrueStereo;
 }
 
 void DeInit()
@@ -49,50 +50,55 @@ void DeInit()
   Condol::destroy(condolences_[1]);
 }
 
-void SetDensity(float value)
+void SetDensity(float x, float y)
 {
-  condolences_[0]->density() = value;
-  condolences_[1]->density() = value;
+  condolences_[0]->density() = x;
+  condolences_[1]->density() = y;
 }
 
-void SetDecay(float value)
+void SetDecay(float x, float y)
 {
-  condolences_[0]->decay() = value;
-  condolences_[1]->decay() = value;
+  condolences_[0]->decay() = x;
+  condolences_[1]->decay() = y;
 }
 
-void SetSpacing(float value)
+void SetSpacing(float x, float y)
 {
-  condolences_[0]->spacing() = value;
-  condolences_[1]->spacing() = value;
+  condolences_[0]->spacing() = x;
+  condolences_[1]->spacing() = y;
 }
 
-void SetSpread(float value)
+void SetSpread(float x, float y)
 {
-  condolences_[0]->spread() = value;
-  condolences_[1]->spread() = value;
+  condolences_[0]->spread() = x;
+  condolences_[1]->spread() = y;
 }
 
-void SetSmear(float value)
+void SetSmear(float x, float y)
 {
-  condolences_[0]->smear() = value;
-  condolences_[1]->smear() = value;
+  condolences_[0]->smear() = x;
+  condolences_[1]->smear() = y;
 }
 
-void SetMelt(float value)
+void SetMode(Mode m)
 {
-  condolences_[0]->melt() = value*0.98f;
-  condolences_[1]->melt() = value*0.98f;
+}
+
+void SetMelt(float x, float y)
+{
+  condolences_[0]->melt() = x*0.98f;
+  condolences_[1]->melt() = y*0.98f;
+}
+
+void SetMix(float x, float y)
+{
+  mix_[0] = x;
+  mix_[1] = y;
 }
 
 float GetInputBandMagnitude(float freq)
 {
   return condolences_[0]->get_input_band_magnitude(freq);
-}
-
-void SetMix(float value)
-{
-  mix_raw_ = value;
 }
 
 void Update()
@@ -110,17 +116,45 @@ void Process(
   SampleArray out_left(out[0], block_size);
   SampleArray out_right(out[1], block_size);
 
-  condolences_[0]->process(in_left, out_left);
-  condolences_[1]->process(in_right, out_right);
+  switch(mode_)
+  {
+    case Mode::TrueStereo:
+    {
+      condolences_[0]->process(in_left, out_left);
+      condolences_[1]->process(in_right, out_right);
+    }
+    break;
 
-  mix_ = mix_raw_;
+    case Mode::ParallelMono:
+    {
+      in_left.copy_to(out_left);
+      out_left.add(out_right);
+      condolences_[1]->process(out_left, out_right);
+      condolences_[0]->process(out_left, out_left);
+    }
+    break;
+
+    case Mode::SeriesMono:
+    {
+      in_left.copy_to(out_left);
+      out_left.add(out_right);
+      condolences_[0]->process(out_left, out_left);
+      condolences_[1]->process(out_left, out_left);
+      out_left.copy_to(out_right);
+    }
+    break;
+  }
+
+  mix_smooth_[0] = mix_[0];
+  mix_smooth_[1] = mix_[1];
   
   float l,r;
-  float m = mix_.value;
+  float ml = mix_smooth_[0].value;
+  float mr = mix_smooth_[1].value;
   for(size_t i = 0; i < block_size; ++i)
   {
-    vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_left[i], out_left[i], m, &l);
-    vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_right[i], out_right[i], m, &r);
+    vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_left[i], out_left[i], ml, &l);
+    vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_right[i], out_right[i], mr, &r);
     out_left[i] = l;
     out_right[i] = r;
   }

@@ -23,7 +23,7 @@ using namespace alchemy;
  *  @todo use clip indicator
  *  @todo limiting on the output
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
- *  @todo update to SDK 0.10.0 and implement Help documentation 
+ *  @todo implement Help documentation 
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
@@ -48,72 +48,70 @@ using namespace alchemy;
  * in the CvMatrix declaration below; declaring it once at the matrix
  * level keeps the knob declarations purely about the knob.  */
 
-/* Page 1 */
-static VirtualKnob vk_density = VirtualKnob(0, "Density")
-  .Linear(0.f, 1.f).Ident("density")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+static Level vibe_spec = Level(vessicle::palette::Fuschia.active.rgb, FillAnim::Pulse)
+  .Passive(vessicle::palette::Fuschia.passive.rgb);
+
+static Level rizz_spec = Level(vessicle::palette::Lime.active.rgb, FillAnim::Ripple)
+  .Passive(vessicle::palette::Lime.passive.rgb);
+
+static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
+  .Linear(0.f, 1.f).Ident("density.left")
+  .Ring(vibe_spec);
+
+static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
+  .Linear(0.f, 1.f).Ident("density.right")
+  .Ring(vibe_spec);
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-static VirtualKnob vk_decay = VirtualKnob(2, "Decay")
-  .Exp(0.1f, 10.f).Unit("s").Ident("decay")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
+  .Exp(0.1f, 10.f).Unit("s").Ident("decay.left")
+  .Ring(vibe_spec);
 
-static VirtualKnob vk_mix = VirtualKnob(4, "Mix")
-  .Linear(0.f, 1.f).Ident("mix")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
+  .Exp(0.1f, 10.f).Unit("s").Ident("decay.right")
+  .Ring(vibe_spec);
 
-static VirtualKnob vk_spacing = VirtualKnob(1, "Warp")
-  .Linear(0.f, 1.f).Ident("warp")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+static VirtualKnob vk_mix_l = VirtualKnob(kPotBottomLeft, "Mix Left")
+  .Linear(0.f, 1.f).Ident("mix.left")
+  .Ring(vibe_spec);
 
-static VirtualKnob vk_smear = VirtualKnob(3, "Smear")
-  .Linear(0.f, 1.f).Ident("smear")
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+static VirtualKnob vk_mix_r = VirtualKnob(kPotBottomRight, "Mix Right")
+  .Linear(0.f, 1.f).Ident("mix.right")
+  .Ring(vibe_spec);
 
-static VirtualKnob vk_melt = VirtualKnob(5, "Melt")
-  .Linear(0.f, 1.f)
-  .Ring(Level(vessicle::fuschia_palette.color, FillAnim::Pulse));
+static VirtualKnob vk_warp_l = VirtualKnob(kPotTopLeft, "Warp Left")
+  .Linear(0.f, 1.f).Ident("warp.left")
+  .Ring(rizz_spec);
 
+static VirtualKnob vk_warp_r = VirtualKnob(kPotTopRight, "Warp Right")
+  .Linear(0.f, 1.f).Ident("warp.right")
+  .Ring(rizz_spec);
 
-// /* Page 2 */
-// static VirtualKnob r_hi_level = VirtualKnob(0, "Hi Level")
-//     .Linear(-kGainMaxDb, +kGainMaxDb)
-//     .Ring(Bipolar(kRightPalette.hi.level_pos,
-//                   kRightPalette.hi.level_neg,
-//                   kRightPalette.hi.level_center));
+static VirtualKnob vk_smear_l = VirtualKnob(kPotMiddleLeft, "Smear Left")
+  .Linear(0.f, 1.f).Ident("smear.left")
+  .Ring(rizz_spec);
 
-// static VirtualKnob r_hi_freq = VirtualKnob(1, "Hi Freq")
-//     .Exp(1000.f, 16000.f)
-//     .Ring(Level(kRightPalette.hi.freq, FillAnim::Pulse));
+static VirtualKnob vk_smear_r = VirtualKnob(kPotMiddleRight, "Smear Right")
+  .Linear(0.f, 1.f).Ident("smear.right")
+  .Ring(rizz_spec);
 
-// static VirtualKnob r_mid_level = VirtualKnob(2, "Mid Level")
-//     .Linear(-kGainMaxDb, +kGainMaxDb)
-//     .Ring(Bipolar(kRightPalette.mid.level_pos,
-//                   kRightPalette.mid.level_neg,
-//                   kRightPalette.mid.level_center));
+static VirtualKnob vk_melt_l = VirtualKnob(kPotBottomLeft, "Melt Left")
+  .Linear(0.f, 1.f).Ident("melt.left")
+  .Ring(rizz_spec);
 
-// static VirtualKnob r_mid_freq = VirtualKnob(3, "Mid Freq")
-//     .Exp(200.f, 5000.f)
-//     .Ring(Level(kRightPalette.mid.freq, FillAnim::Ripple));
+static VirtualKnob vk_melt_r = VirtualKnob(kPotBottomRight, "Melt Right")
+  .Linear(0.f, 1.f).Ident("melt.right")
+  .Ring(rizz_spec);
 
-// static VirtualKnob r_lo_level = VirtualKnob(4, "Lo Level")
-//     .Linear(-kGainMaxDb, +kGainMaxDb)
-//     .Ring(Bipolar(kRightPalette.lo.level_pos,
-//                   kRightPalette.lo.level_neg,
-//                   kRightPalette.lo.level_center));
-
-// static VirtualKnob r_lo_freq = VirtualKnob(5, "Lo Freq")
-//     .Exp(60.f, 600.f)
-//     .Ring(Level(kRightPalette.lo.freq, FillAnim::Pulse));
 
 // /* Bind knobs to page */
-static Page left_page  = Page(0).Name("Left").Knobs(
-  vk_density, vk_decay, vk_spacing, l_smear, vk_mix, vk_melt
-);
+static Page vibe_page  = Page(0).Name("Vibe")
+  .Color(vessicle::palette::Fuschia.active.hex)
+  .Knobs(vk_density_l, vk_density_r, vk_decay_l, vk_decay_r, vk_mix_l, vk_mix_r);
 
-// static Page right_page = Page(1).Knobs(r_hi_level, r_hi_freq,
-//                                        r_mid_level, r_mid_freq,
-//                                        r_lo_level, r_lo_freq);
+static Page rizz_page = Page(1).Name("Rizz")
+  .Color(vessicle::palette::Lime.active.hex)
+  .Knobs(vk_warp_l, vk_warp_r, vk_smear_l, vk_smear_r, vk_melt_l, vk_melt_r);
 
 constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
@@ -169,13 +167,13 @@ struct DensitySettings : Serializable
   }
 };
 
-constexpr size_t page_count = 1;
+constexpr size_t page_count = 2;
 
 /* Get our SDK surfaces and opt in to everything */
 static AlchemyLab                        hw;
 static ControlLoop                       loop    (hw);
-static Pager                             pager   (hw.buttons[0], page_count, kNumPots);
-static ParamLock<page_count * kNumPots>  locks   (hw.buttons[0], pager);
+static Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
+static ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
 static Presets                           presets (hw.seed.qspi);
 static Settings                          settings(hw, &pager);
 static CvMatrix                          cv_matrix(kNumCvInputs);
@@ -185,19 +183,24 @@ static DensitySettings                   density_settings;
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  float dt = vk_density.Value();
-  float st = dt;
-  float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
-  float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
-  float density = vessl::math::lerp(dmin, dmax, dt);
-  float spread  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, st);
-  condolences::SetDensity(density);
-  condolences::SetSpread(spread);
-  condolences::SetDecay(vk_decay.Value());
-  condolences::SetSpacing(vk_spacing.Value());
-  condolences::SetSmear(l_smear.Value());
-  condolences::SetMix(vk_mix.Value());
-  condolences::SetMelt(vk_melt.Value());
+  const float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
+  const float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
+
+  float dtl = vk_density_l.Value();
+  float dtr = vk_density_r.Value();
+  float stl = dtl;
+  float str = dtr;
+  float density_l = vessl::math::lerp(dmin, dmax, dtl);
+  float density_r = vessl::math::lerp(dmin, dmax, dtr);
+  float spread_l  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, stl);
+  float spread_r  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, str);
+  condolences::SetDensity(density_l, density_r);
+  condolences::SetSpread(spread_l, spread_r);
+  condolences::SetDecay(vk_decay_l.Value(), vk_decay_r.Value());
+  condolences::SetSpacing(vk_warp_l.Value(), vk_warp_r.Value());
+  condolences::SetSmear(vk_smear_l.Value(), vk_smear_r.Value());
+  condolences::SetMix(vk_mix_l.Value(), vk_mix_r.Value());
+  condolences::SetMelt(vk_melt_l.Value(), vk_melt_r.Value());
 
   static constexpr float sample_freqs[6] = { 60.f, 120.f, 240.f, 480.f, 480.f*2, 480.f*3 };
   for (uint8_t j = 0; j < kNumCvInputs; ++j)
@@ -235,11 +238,11 @@ int main()
     settings.UseBrightness();
     settings.UsePresets(presets);
 
-    /* Preset payload — every Serializable surface gets walked on Save/Load. */
+    /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);
-    presets.Manage(density_settings);
     presets.Manage(locks);
     presets.Manage(settings);
+    presets.Manage(density_settings);
     presets.UseNames();
 
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
@@ -248,8 +251,8 @@ int main()
         .Use(locks)
         .Use(settings)
         //.Use(cv_matrix)
-        .Use(left_page)
-        //.Use(right_page)
+        .Use(vibe_page)
+        .Use(rizz_page)
         .Use(host)
         .OnFrame(UpdateParams);
 
