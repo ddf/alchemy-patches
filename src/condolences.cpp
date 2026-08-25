@@ -44,6 +44,11 @@ using namespace alchemy;
  * in the CvMatrix declaration below; declaring it once at the matrix
  * level keeps the knob declarations purely about the knob.  */
 
+ DEFINE_VESSICLE_COLOR(skew_color_right, 3300CC)
+ DEFINE_VESSICLE_COLOR(skew_color_left,  CC0033)
+ DEFINE_VESSICLE_COLOR(skew_color_center, FF00FF)
+ DEFINE_VESSICLE_COLOR(skew_color_back, 080008)
+
 static Level vibe_spec = Level(vessicle::palette::Fuschia.active.rgb, FillAnim::Pulse);
   //.Passive(vessicle::palette::Fuschia.passive.rgb);
 
@@ -51,10 +56,21 @@ static Level rizz_spec = Level(vessicle::palette::Lime.active.rgb, FillAnim::Rip
   .Passive(vessicle::palette::Lime.passive.rgb);
 
 static Bipolar skew_spec = Bipolar(
-  vessicle::color::Lime.rgb, 
-  vessicle::color::Red.rgb,
-  vessicle::color::DarkSlateBlue.rgb
+  skew_color_right.rgb,
+  skew_color_left.rgb,
+  skew_color_center.rgb
 );
+
+static constexpr float skew_max    = 0.5f;
+static constexpr float skew_detent = 0.05f;
+
+static float GetSkewValue(const VirtualKnob& fromKnob)
+{
+  float value = vessl::math::abs(fromKnob.Value());
+  float sign  = fromKnob.Value() > 0 ? 1.f : -1.f;
+  float d = value - skew_detent;
+  return d < 0 ? 0.f : vessl::math::lerp(0.f, skew_max*sign, d / (skew_max - skew_detent));
+}
 
 static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
   .Linear(0.f, 1.f).Ident("density.left")
@@ -143,39 +159,46 @@ static void DrawKnobWithSkew(
 )
 {
   VirtualKnob* skew_knob = static_cast<VirtualKnob*>(ctx);
-  const float skew_val = skew_knob->Value();
+  const float skew_val = GetSkewValue(*skew_knob);
   
+  FillDesc over_right;
+  over_right.center_color = { 0u, 0u, 0u };
+  over_right.compose = FillCompose::Replace;
+  over_right.mode = FillMode::Center;
+  over_right.color = skew_color_right.rgb;
+  over_right.neg_color = skew_color_right.rgb;
+  over_right.pivot01 = norm;
+
+  FillDesc over_left;
+  over_left.center_color = { 0u, 0u, 0u };
+  over_left.compose = FillCompose::Overlay;
+  over_left.mode = FillMode::Center;
+  over_left.color = skew_color_left.rgb;
+  over_left.neg_color = skew_color_left.rgb;
+  over_left.pivot01 = norm;
+
+  PipDesc center;
+  center.color = skew_color_center.rgb;
+  center.background = { 0u, 0u, 0u }; // skew_color_back.rgb;
+  center.compose = PipCompose::Add;
+  center.smooth = true;
+
+  PipDesc bottom;
+  bottom.color = skew_val == 0 ? skew_color_center.rgb :
+                 skew_val > 0 ? skew_color_right.rgb : skew_color_left.rgb;
+  bottom.blink_hz = skew_val == 0 ? 0.f : 2.f;                   
+
   RingFrame f;
   f.Begin(geo);
-
-  PipDesc skew;
-  skew.color   = vessicle::color::Navy.rgb;
-  skew.compose = PipCompose::Add;
-  skew.smooth  = true;
-  skew.width   = 1 + vessl::math::abs(skew_val)*32;
-  f.Pip(Region::Full, skew, norm);
-
-  PipDesc value;
-  value.color  = vibe_spec.color;
-  //value.background = vessicle::color::DarkSlateBlue.rgb;
-  value.compose = PipCompose::Replace;
-  value.smooth = true;
-  f.Pip(Region::Full, value, norm);
-
-  // PipDesc left;
-  // left.color          = skew_spec.neg;
-  // left.compose        = PipCompose::Add;
-  // left.smooth         = true;
-
-  // PipDesc right;
-  // right.color         = skew_spec.pos;
-  // right.compose       = PipCompose::Add;
-  // right.smooth        = true;
-
-  // f.Pip(Region::Full, left, norm - skew_val);
-  // f.Pip(Region::Full, right, norm + skew_val);
-
+  f.Base(over_right, norm + skew_val, t_ms);
+  f.Pip(Region::BottomPip, bottom, 0.f, 1.f, t_ms);
   f.Emit(panel, pot);
+
+  RingFrame g;
+  g.BeginOverlay(geo);
+  g.Base(over_left, norm - skew_val, t_ms);
+  g.Pip(Region::Full, center, norm, 1.f, t_ms);
+  g.Emit(panel, pot);
 }
 
 static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Density")
@@ -293,6 +316,7 @@ static CvMatrix                          cv_matrix(kNumCvInputs);
 static hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
 static DensitySettings                   density_settings;
 
+
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
@@ -305,8 +329,9 @@ static void UpdateParams()
   // when control both with skew
   if(skew)
   {
-    float dtl = vessl::math::constrain(vk_density.Value() - vk_density_skew.Value(), 0.f, 1.f);
-    float dtr = vessl::math::constrain(vk_density.Value() + vk_density_skew.Value(), 0.f, 1.f);
+    float dsk = GetSkewValue(vk_density_skew);
+    float dtl = vessl::math::constrain(vk_density.Value() - dsk, 0.f, 1.f);
+    float dtr = vessl::math::constrain(vk_density.Value() + dsk, 0.f, 1.f);
     float stl = dtl;
     float str = dtr;
     float density_l = vessl::math::lerp(dmin, dmax, dtl);
@@ -317,15 +342,20 @@ static void UpdateParams()
     condolences::SetSpread(spread_l, spread_r);
 
     float decay = vk_decay.Value();
+    float decsk = GetSkewValue(vk_decay_skew);
     float warp  = vk_warp.Value();
+    float warsk = GetSkewValue(vk_warp_skew);
     float smear = vk_smear.Value();
+    float smesk = GetSkewValue(vk_smear_skew);
     float melt  = vk_melt.Value();
+    float melsk = GetSkewValue(vk_melt_skew);
     float mix   = vk_mix.Value();
-    condolences::SetDecay(decay * 1.f - vk_decay_skew.Value(), decay * 1.f + vk_decay_skew.Value());
-    condolences::SetSpacing(warp * 1.f - vk_warp_skew.Value(), warp * 1.f + vk_warp_skew.Value());
-    condolences::SetSmear(smear * 1.f - vk_smear_skew.Value(), smear * 1.f + vk_smear_skew.Value());
-    condolences::SetMelt(melt * 1.f - vk_melt_skew.Value(), melt * 1.f + vk_melt_skew.Value());
-    condolences::SetMix(mix * 1.f - vk_mix_skew.Value(), mix * 1.f + vk_mix_skew.Value());
+    float mixsk = GetSkewValue(vk_mix_skew);
+    condolences::SetDecay(decay * 1.f - decsk, decay * 1.f + decsk);
+    condolences::SetSpacing(warp * 1.f - warsk, warp * 1.f + warsk);
+    condolences::SetSmear(smear * 1.f - smesk, smear * 1.f + smesk);
+    condolences::SetMelt(melt * 1.f - melsk, melt * 1.f + melsk);
+    condolences::SetMix(mix * 1.f - mixsk, mix * 1.f + mixsk);
   }
   // when controlling left and right independently
   else
