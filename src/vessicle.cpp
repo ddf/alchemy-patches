@@ -15,6 +15,7 @@
 #include "alchemy/surface/settings.h"
 #include "alchemy/surface/virtual_knob.h"
 
+#include "attributes.h"
 #include "vessicle_dsp.h"
 #include "vessicle_palette.h"
 
@@ -27,27 +28,28 @@ using namespace vessicle;
 
 /* Page 1 */
 
-static VirtualKnob param_a = VirtualKnob(0, "Parameter A")
+
+static ALCHEMY_SRAM VirtualKnob param_a = VirtualKnob(0, "Parameter A")
   .Linear(0, 1.f)
   .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
-static VirtualKnob param_b = VirtualKnob(2, "Parameter B")
+static ALCHEMY_SRAM VirtualKnob param_b = VirtualKnob(2, "Parameter B")
   .Linear(0, 1.f)
   .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
-static VirtualKnob param_c = VirtualKnob(4, "Parameter C")
+static ALCHEMY_SRAM VirtualKnob param_c = VirtualKnob(4, "Parameter C")
   .Linear(0, 1.f)
   .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
-static VirtualKnob param_d = VirtualKnob(1, "Parameter D")
+static ALCHEMY_SRAM VirtualKnob param_d = VirtualKnob(1, "Parameter D")
   .Linear(0, 1.f)
   .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
-static VirtualKnob param_e = VirtualKnob(3, "Parameter E")
+static ALCHEMY_SRAM VirtualKnob param_e = VirtualKnob(3, "Parameter E")
   .Linear(0, 1.f)
   .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
-static VirtualKnob param_f = VirtualKnob(5, "Parameter F")
+static ALCHEMY_SRAM VirtualKnob param_f = VirtualKnob(5, "Parameter F")
   .Linear(0, 1.f)
   .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
@@ -83,7 +85,7 @@ static VirtualKnob param_f = VirtualKnob(5, "Parameter F")
 //     .Ring(Level(kRightPalette.lo.freq, FillAnim::Pulse));
 
 // /* Bind knobs to page, declaration format matches arrangement on the device */
-static Page page_one  = Page(0).Knobs(
+static ALCHEMY_SRAM Page page_one  = Page(0).Knobs(
   param_a, param_d,
   param_b, param_e,
   param_c, param_f
@@ -96,13 +98,13 @@ static Page page_one  = Page(0).Knobs(
 constexpr uint8_t page_count = 1;
 
 /* Get our SDK surfaces and opt in to everything */
-static AlchemyLab                        hw;
-static ControlLoop                       loop    (hw);
-static Pager                             pager   (hw.buttons[0], page_count, kNumPots);
-static ParamLock<page_count * kNumPots>  locks   (hw.buttons[0], pager);
-static Presets                           presets (hw.seed.qspi);
-static Settings                          settings(hw, &pager);
-static CvMatrix                          cv_matrix(kNumCvInputs);
+static ALCHEMY_SRAM AlchemyLab                        hw;
+static ALCHEMY_SRAM ControlLoop                       loop    (hw);
+static ALCHEMY_SRAM Pager                             pager   (hw.buttons[0], page_count, kNumPots);
+static ALCHEMY_SRAM ParamLock<page_count * kNumPots>  locks   (hw.buttons[0], pager);
+static ALCHEMY_SRAM Presets                           presets (hw.seed.qspi);
+static ALCHEMY_SRAM Settings                          settings(hw, &pager);
+static ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
