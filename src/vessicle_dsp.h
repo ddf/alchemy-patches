@@ -22,6 +22,8 @@ enum class Parameter : uint8_t
   Max = UINT8_MAX
 };
 
+uint32_t GetBlockSize();
+
  /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
 void Init(float sample_rate);
 
@@ -33,7 +35,6 @@ void Update();
 
 /**
  * Audio callback. Pass directly to hw.StartAudio(eq_dsp::Process).
- * Processes left and right independently through three series biquads each.
  */
 void Process(daisy::AudioHandle::InputBuffer  in,
              daisy::AudioHandle::OutputBuffer out,
