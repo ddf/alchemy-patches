@@ -7,9 +7,15 @@
 
 namespace condolences
 {
-  using SampleArray = vessl::array<float>;
-  using Condol = Condolences<float, SpectrumSize, Overlap>;
-  using Limiter = vessl::processors::limiter<float>;
+  using sample_t = float;
+  using complex_t = vessl::transform::complex<sample_t>;
+  using SampleArray = vessl::array<sample_t>;
+  using Condol = Condolences<sample_t, SpectrumSize, Overlap>;
+  using Sympathies = typename Condol::Sympathies;
+  using SpectralGen = typename Condol::Sympathies::SpectralGen;
+  using FrequencyBand = typename SpectralGen::frequency_band;
+  using SpectralData = typename SpectralGen::data;
+  using Limiter = vessl::processors::limiter<sample_t>;
   using Smoother = vessl::math::easing::smoother<float>;
 
 // state
@@ -28,6 +34,31 @@ namespace
   //int16_t __attribute__((section(".text"))) data0[SpectrumSize*Overlap*2];
   //int16_t __attribute__((section(".text"))) data1[SpectrumSize*Overlap*2];
 
+  // these wind up in DTCMRAM without any markup, which is good.
+  
+  // shared between both instances of Condol.  
+  sample_t input_window[Condol::AnalysisSize];
+  sample_t input_analysis[Condol::AnalysisSize];
+
+  // split between the two instances of Condol
+  sample_t input_buffer[Condol::AnalysisSize*2];
+  complex_t input_spectrum[Condol::AnalysisSize];
+
+  sample_t output_window[SpectrumSize];
+  complex_t output_spectrum[SpectrumSize];
+  FrequencyBand output_bands[SpectrumSize];
+
+  constexpr size_t sample_data_count = SpectrumSize*Overlap*2*2;
+  // this _might_ fit into DTCMRAM with everything else if we can switch to int16_t for sample type.
+  // altho, if we then bumped up spectrum size to 4096, we'd probably run out of space again.
+  // sample_t output_sample_data[SpectrumSize*Overlap*2*2];
+  sample_t* output_sample_data = nullptr;
+
+  // we allocate these, but don't directly modify them
+  SpectralGen* spectral_[2];
+  Sympathies* sympathies_[2];
+
+  // we modify these
   Condol* condolences_[2];
   Limiter limiter_[2];
   Mode mode_;
@@ -40,16 +71,67 @@ void Init(float sample_rate)
   //memset(data0, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
   //memset(data1, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
 
-  condolences_[0] = Condol::create(sample_rate);
-  condolences_[1] = Condol::create(sample_rate);
+  output_sample_data = new sample_t[sample_data_count];
+
+  constexpr size_t sample_data_size = sizeof(sample_t)*sample_data_count;
+  memset(output_sample_data, 0, sample_data_size);
+
+  vessl::sample::windows::render(vessl::sample::windows::type::hann, input_window, Condol::AnalysisSize);
+  vessl::sample::windows::render(vessl::sample::windows::type::triangle, output_window, SpectrumSize);
+
+  SpectralData data0 = {
+    vessl::array<FrequencyBand>(output_bands, SpectrumSize/2),
+    vessl::array<complex_t>(output_spectrum, SpectrumSize/2),
+    vessl::array<sample_t>(output_sample_data, SpectrumSize*Overlap*2),
+    vessl::array<sample_t>(output_window, SpectrumSize)
+  };
+
+  SpectralData data1 = {
+    vessl::array<FrequencyBand>(output_bands + data0.bands.size(), data0.bands.size()),
+    vessl::array<complex_t>(output_spectrum + data0.spectrum.size(), data0.spectrum.size()),
+    vessl::array<sample_t>(output_sample_data + data0.signal.size(), data0.signal.size()),
+    vessl::array<sample_t>(output_window, SpectrumSize)
+  };
+
+  spectral_[0] = new SpectralGen(data0, sample_rate);
+  spectral_[1] = new SpectralGen(data1, sample_rate);
+
+  sympathies_[0] = new Sympathies(spectral_[0], sample_rate);
+  sympathies_[1] = new Sympathies(spectral_[1], sample_rate);
+
+  condolences_[0] = new Condol(
+    sample_rate, 
+    input_window, 
+    input_buffer, 
+    input_analysis, 
+    input_spectrum, 
+    sympathies_[0]
+  );
+
+  condolences_[1] = new Condol(
+    sample_rate, 
+    input_window, 
+    input_buffer + Condol::AnalysisSize, 
+    input_analysis, 
+    input_spectrum + Condol::AnalysisSize,
+    sympathies_[1]
+  );
 
   mode_ = Mode::TrueStereo;
 }
 
 void DeInit()
 {
-  Condol::destroy(condolences_[0]);
-  Condol::destroy(condolences_[1]);
+  delete[] output_sample_data;
+
+  delete spectral_[0];
+  delete spectral_[1];
+
+  delete sympathies_[0];
+  delete sympathies_[1];
+
+  delete condolences_[0];
+  delete condolences_[1];
 }
 
 
