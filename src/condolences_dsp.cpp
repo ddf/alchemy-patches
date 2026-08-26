@@ -68,6 +68,12 @@ void SetDecay(float x, float y)
   condolences_[1]->decay() = y;
 }
 
+void SetSensitivity(float x, float y)
+{
+  condolences_[0]->sensitivity() = x;
+  condolences_[1]->sensitivity() = y;
+}
+
 void SetSpacing(float x, float y)
 {
   condolences_[0]->spacing() = vessl::math::clamp_delta(x);
