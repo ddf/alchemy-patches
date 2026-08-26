@@ -23,7 +23,6 @@ using namespace alchemy;
  * Definitely:
  *  @todo setup CV routing
  *  @todo use clip indicator
- *  @todo limiting on the output
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
  *  @todo implement Help documentation
  *  @todo expose sensitivity either on a knob or in settings OR set it based on other parameters.

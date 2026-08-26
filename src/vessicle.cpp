@@ -20,7 +20,6 @@
 
 using namespace alchemy;
 using namespace vessicle;
-using namespace vessicle_dsp;
 
 /* We define each knob's curve and LED Ring animation.  CV routing lives
  * in the CvMatrix declaration below; declaring it once at the matrix
@@ -30,27 +29,27 @@ using namespace vessicle_dsp;
 
 static VirtualKnob param_a = VirtualKnob(0, "Parameter A")
   .Linear(0, 1.f)
-  .Ring(Level(lime_palette.color, FillAnim::Pulse));
+  .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
 static VirtualKnob param_b = VirtualKnob(2, "Parameter B")
   .Linear(0, 1.f)
-  .Ring(Level(lime_palette.color, FillAnim::Pulse));
+  .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
 static VirtualKnob param_c = VirtualKnob(4, "Parameter C")
   .Linear(0, 1.f)
-  .Ring(Level(lime_palette.color, FillAnim::Pulse));
+  .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
 static VirtualKnob param_d = VirtualKnob(1, "Parameter D")
   .Linear(0, 1.f)
-  .Ring(Level(lime_palette.color, FillAnim::Pulse));
+  .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
 static VirtualKnob param_e = VirtualKnob(3, "Parameter E")
   .Linear(0, 1.f)
-  .Ring(Level(lime_palette.color, FillAnim::Pulse));
+  .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
 static VirtualKnob param_f = VirtualKnob(5, "Parameter F")
   .Linear(0, 1.f)
-  .Ring(Level(lime_palette.color, FillAnim::Pulse));
+  .Ring(Level(vessicle::color::Lime.rgb, FillAnim::Pulse));
 
 // /* Page 2 */
 // static VirtualKnob r_hi_level = VirtualKnob(0, "Hi Level")
@@ -108,20 +107,20 @@ static CvMatrix                          cv_matrix(kNumCvInputs);
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  SetParameter(Parameter::A, param_a.Value());
-  SetParameter(Parameter::B, param_b.Value());
-  SetParameter(Parameter::C, param_c.Value());
-  SetParameter(Parameter::D, param_d.Value());
-  SetParameter(Parameter::E, param_e.Value());
-  SetParameter(Parameter::F, param_f.Value());
+  vessicle_dsp::SetParameter(vessicle_dsp::Parameter::A, param_a.Value());
+  vessicle_dsp::SetParameter(vessicle_dsp::Parameter::B, param_b.Value());
+  vessicle_dsp::SetParameter(vessicle_dsp::Parameter::C, param_c.Value());
+  vessicle_dsp::SetParameter(vessicle_dsp::Parameter::D, param_d.Value());
+  vessicle_dsp::SetParameter(vessicle_dsp::Parameter::E, param_e.Value());
+  vessicle_dsp::SetParameter(vessicle_dsp::Parameter::F, param_f.Value());
 
-  Update();
+  vessicle_dsp::Update();
 }
 
 int main()
 {
-    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, 128);
-    Init(hw.SampleRate());
+    hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, vessicle_dsp::GetBlockSize());
+    vessicle_dsp::Init(hw.SampleRate());
 
     /* CV routing.  A static layout is just setting each channel once. */
     cv_matrix.Jack(0).To(param_a);
