@@ -9,6 +9,7 @@ namespace condolences
 {
   using SampleArray = vessl::array<float>;
   using Condol = Condolences<float, SpectrumSize, Overlap>;
+  using Limiter = vessl::processors::limiter<float>;
   using Smoother = vessl::math::easing::smoother<float>;
 
 // state
@@ -28,6 +29,7 @@ namespace
   //int16_t __attribute__((section(".text"))) data1[SpectrumSize*Overlap*2];
 
   Condol* condolences_[2];
+  Limiter limiter_[2];
   Mode mode_;
   Smoother mix_smooth_[2];
   float mix_[2];
@@ -166,8 +168,8 @@ void Process(
   {
     vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_left[i], out_left[i], ml, &l);
     vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_right[i], out_right[i], mr, &r);
-    out_left[i] = l;
-    out_right[i] = r;
+    out_left[i] = limiter_[0].process(l);
+    out_right[i] = limiter_[1].process(r);
   }
 }
 }
