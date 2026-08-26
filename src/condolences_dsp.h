@@ -5,8 +5,6 @@
 #include "daisy_seed.h"
 #include "Condolences.h"
 
-#define SECTION_SRAM __attribute__((section(".text")))
-
 namespace condolences
 {
     /**
