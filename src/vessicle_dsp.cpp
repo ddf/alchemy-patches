@@ -8,6 +8,8 @@
 #include "vessicle_dsp.h"
 #include "vessl/vessl.h"
 #include "SpectralGenerator.h"
+#include "debugger.h"
+#include "sys/system.h"
 
 static constexpr size_t SpectrumSize = 4096;
 static constexpr size_t Overlap = 4;
@@ -18,6 +20,9 @@ using WindowType = vessl::sample::windows::type;
 
 namespace vessicle_dsp
 {
+
+volatile float process_pct;
+volatile float process_ms;
 
 namespace
 {
@@ -38,6 +43,9 @@ namespace
 
   float block_out_[SpectralGen::block_size];
   size_t block_out_read_idx_;
+
+  // approx length of time we have to produce one Process block
+  uint32_t process_block_ms_max;
 }
 
 uint32_t GetBlockSize()
@@ -45,7 +53,7 @@ uint32_t GetBlockSize()
   return static_cast<uint32_t>(SpectralGen::block_size);
 }
 
-void Init(float sample_rate)
+void Init(float sample_rate, size_t block_size)
 {
   spectral_gen_s_ = SpectralGen::create(sample_rate, WindowType::triangle);
 
@@ -62,6 +70,12 @@ void Init(float sample_rate)
   memset(parameters_, 0, parameters_size_*sizeof(float));
   memset(block_out_, 0, sizeof(float)*SpectralGen::block_size);
   block_out_read_idx_ = SpectralGen::block_size;
+
+  float block_rate_seconds = sample_rate / block_size;
+  process_block_ms_max = static_cast<uint32_t>(block_rate_seconds*1000);
+
+  process_pct = 0.2f;
+  process_ms  = 17;
 }
 
 void SetParameter(Parameter param, float value)
@@ -102,6 +116,8 @@ void Process(
   size_t block_size
 )
 {
+  const uint32_t block_start_ms = daisy::System::GetNow();
+
   SampleArray in_left(const_cast<float*>(in[0]), block_size);
   SampleArray in_right(const_cast<float*>(in[1]), block_size);
   SampleArray out_left(out[0], block_size);
@@ -126,6 +142,11 @@ void Process(
     }
     rw << block_out_[block_out_read_idx_++];
   }
+
+  const uint32_t block_end_ms = daisy::System::GetNow();
+
+  //process_ms  = block_end_ms - block_start_ms;
+  //process_pct = static_cast<float>(process_ms) / process_block_ms_max;
 }
 
 } // namespace vessicle_dsp
