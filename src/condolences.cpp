@@ -12,6 +12,7 @@
 #include "alchemy/surface/virtual_button.h"
 #include "alchemy/surface/button_bank.h"
 
+#include "attributes.h"
 #include "condolences_dsp.h"
 #include "condolences_gui.h"
 #include "vessl/vessl.h"
@@ -44,14 +45,14 @@ constexpr size_t page_count = 2;
 /* Get our SDK surfaces and opt in to everything.
  * Not declared static so condolences_gui.h can reference hw and pager.
  */
-SECTION_SRAM AlchemyLab                        hw;
-SECTION_SRAM ControlLoop                       loop    (hw);
-SECTION_SRAM Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
-SECTION_SRAM ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
-SECTION_SRAM Presets                           presets (hw.seed.qspi);
-SECTION_SRAM Settings                          settings(hw, &pager);
-SECTION_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
-SECTION_SRAM hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
+ALCHEMY_SRAM AlchemyLab                        hw;
+ALCHEMY_SRAM ControlLoop                       loop    (hw);
+ALCHEMY_SRAM Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
+ALCHEMY_SRAM ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
+ALCHEMY_SRAM Presets                           presets (hw.seed.qspi);
+ALCHEMY_SRAM Settings                          settings(hw, &pager);
+ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
+ALCHEMY_SRAM hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Settings
@@ -129,100 +130,100 @@ static void ConfigureSettings()
 
 /////////////////////////////////////////////////////////////////////////////
 // Knobs
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
   .Linear(0.f, 1.f).Ident("density.left")
   .Ring(vibe_spec);
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
   .Linear(0.f, 1.f).Ident("density.right")
   .Ring(vibe_spec);
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
   .Exp(0.1f, 10.f).Unit("s").Ident("decay.left")
   .Ring(vibe_spec);
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
   .Exp(0.1f, 10.f).Unit("s").Ident("decay.right")
   .Ring(vibe_spec);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_mix_l = VirtualKnob(kPotBottomLeft, "Mix Left")
   .Linear(0.f, 1.f).Ident("mix.left")
   .Ring(vibe_spec);
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_mix_r = VirtualKnob(kPotBottomRight, "Mix Right")
   .Linear(0.f, 1.f).Ident("mix.right")
   .Ring(vibe_spec);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_warp_l = VirtualKnob(kPotTopLeft, "Warp Left")
   .Linear(0.f, 1.f).Ident("warp.left")
   .Ring(rizz_spec);
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_warp_r = VirtualKnob(kPotTopRight, "Warp Right")
   .Linear(0.f, 1.f).Ident("warp.right")
   .Ring(rizz_spec);
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_smear_l = VirtualKnob(kPotMiddleLeft, "Smear Left")
   .Linear(0.f, 1.f).Ident("smear.left")
   .Ring(rizz_spec);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_smear_r = VirtualKnob(kPotMiddleRight, "Smear Right")
   .Linear(0.f, 1.f).Ident("smear.right")
   .Ring(rizz_spec);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_melt_l = VirtualKnob(kPotBottomLeft, "Melt Left")
   .Linear(0.f, 1.f).Ident("melt.left")
   .Ring(rizz_spec);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_melt_r = VirtualKnob(kPotBottomRight, "Melt Right")
   .Linear(0.f, 1.f).Ident("melt.right")
   .Ring(rizz_spec);
 
 ///////////////////////////////////////////////////////////////////////
 // Skew Knobs
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Density Skew")
   .Ident("density.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_density_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Decay Skew")
   .Ident("decay.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_mix_skew = VirtualKnob(kPotBottomLeft, "Mix Skew")
   .Ident("mix.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_mix_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
   .Ident("warp.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_warp_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_smear_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_melt_skew = VirtualKnob(kPotBottomRight, "Melt Skew")
   .Ident("melt.skew")
   .Linear(-0.5f, 0.5f)
@@ -231,71 +232,71 @@ static VirtualKnob vk_melt_skew = VirtualKnob(kPotBottomRight, "Melt Skew")
 /////////////////////////////////////////////////////////////////////////
 // Param Knobs which get skewed
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Density")
   .Ident("density.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_decay = VirtualKnob(kPotMiddleLeft, "Decay")
   .Ident("decay.both")
   .Exp(0.1f, 10.f).Unit("s")
   .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
 
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualKnob vk_mix = VirtualKnob(kPotBottomLeft, "Mix")
   .Ident("mix.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_mix_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
   .Ident("warp.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_warp_skew));
   
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ident("smear.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static VirtualKnob vk_melt = VirtualKnob(kPotBottomRight, "Melt")
   .Ident("melt.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_melt_skew));
 
 // /* Bind knobs to page */
-SECTION_SRAM
+ALCHEMY_SRAM
 static Page left_page  = Page(0).Name("Left")
   .Color(vessicle::palette::Fuschia.active.hex)
   .Knobs(vk_density_l, vk_density_r, vk_decay_l, vk_decay_r, vk_mix_l, vk_mix_r);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static Page right_page = Page(1).Name("Right")
   .Color(vessicle::palette::Lime.active.hex)
   .Knobs(vk_warp_l, vk_warp_r, vk_smear_l, vk_smear_r, vk_melt_l, vk_melt_r);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static Page vibe_page = Page(0).Name("Vibe")
   .Color(vessicle::palette::Fuschia.active.hex)
   .Knobs(vk_density, vk_decay, vk_mix, vk_warp, vk_melt, vk_smear);
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static Page rizz_page = Page(1).Name("Rizz")
   .Color(vessicle::palette::Lime.active.hex)
   .Knobs(vk_density_skew, vk_decay_skew, vk_mix_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew);
 
 //////////////////////////////////////////////////////////////////////
 // button, button, whose got the button?
-SECTION_SRAM
+ALCHEMY_SRAM
 static VirtualButton vb_shift = VirtualButton(kButtonB2, "Shift")
   .Ident("btn.shift");
 
-SECTION_SRAM  
+ALCHEMY_SRAM  
 static ButtonBank buttons;
 
 static void OnPoll(uint32_t t_ms)
