@@ -14,7 +14,7 @@ namespace vessicle_dsp
 // (derived from block_size & sample_rate)
 extern volatile float process_pct;
 // duration of the last Process call in milliseconds
-extern volatile float process_ms;
+extern volatile float process_us;
 
 enum class Parameter : uint8_t
 {
