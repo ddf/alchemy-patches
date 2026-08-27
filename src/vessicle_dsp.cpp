@@ -21,8 +21,9 @@ using WindowType = vessl::sample::windows::type;
 namespace vessicle_dsp
 {
 
+/** @todo use CpuLoadMeter for these, gives min/max/avg */
 volatile float process_pct;
-volatile float process_ms;
+volatile float process_us;
 
 namespace
 {
@@ -45,7 +46,7 @@ namespace
   size_t block_out_read_idx_;
 
   // approx length of time we have to produce one Process block
-  uint32_t process_block_ms_max;
+  uint32_t process_block_us_max;
 }
 
 uint32_t GetBlockSize()
@@ -71,11 +72,11 @@ void Init(float sample_rate, size_t block_size)
   memset(block_out_, 0, sizeof(float)*SpectralGen::block_size);
   block_out_read_idx_ = SpectralGen::block_size;
 
-  float block_rate_seconds = sample_rate / block_size;
-  process_block_ms_max = static_cast<uint32_t>(block_rate_seconds*1000);
+  float block_rate_seconds = block_size / sample_rate;
+  process_block_us_max = static_cast<uint32_t>(block_rate_seconds*1000*1000);
 
-  process_pct = 0.2f;
-  process_ms  = 17;
+  process_us = process_block_us_max;
+  process_pct = 1.0f;
 }
 
 void SetParameter(Parameter param, float value)
@@ -116,7 +117,7 @@ void Process(
   size_t block_size
 )
 {
-  const uint32_t block_start_ms = daisy::System::GetNow();
+  const uint32_t block_start_us = daisy::System::GetUs();
 
   SampleArray in_left(const_cast<float*>(in[0]), block_size);
   SampleArray in_right(const_cast<float*>(in[1]), block_size);
@@ -143,10 +144,10 @@ void Process(
     rw << block_out_[block_out_read_idx_++];
   }
 
-  const uint32_t block_end_ms = daisy::System::GetNow();
+  const uint32_t block_end_us = daisy::System::GetUs();
 
-  //process_ms  = block_end_ms - block_start_ms;
-  //process_pct = static_cast<float>(process_ms) / process_block_ms_max;
+  process_us  = block_end_us - block_start_us;
+  process_pct = static_cast<float>(process_us) / process_block_us_max;
 }
 
 } // namespace vessicle_dsp

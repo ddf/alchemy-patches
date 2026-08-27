@@ -121,9 +121,6 @@ static void UpdateParams()
   vessicle_dsp::SetParameter(vessicle_dsp::Parameter::F, param_f.Value());
 
   vessicle_dsp::Update();
-
-  debugger.SetVar("dbg.pms", 0);
-  //debugger.SetVar("dbg.ppct", 0.5f);
 }
 
 int main()
@@ -131,8 +128,12 @@ int main()
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, vessicle_dsp::GetBlockSize());
     vessicle_dsp::Init(hw.SampleRate(), hw.BlockSize());
 
-    debugger.Var(vessicle_dsp::process_ms, "dbg.pms", "Process Ms", "{\"kind\":\"linear\", \"lo\":0,\"hi\":100, \"unit\":\"ms\"}")
-            .Var(0.5f, "dbg.ppct", "Process %");
+    debugger.Var(vessicle_dsp::process_us, "dbg.pus", "Process micro")
+            .Range(0, 1000000)
+            .Kind("linear")
+            .Unit("us");
+
+    debugger.Var(vessicle_dsp::process_pct, "dbg.ppct", "Process %");
 
     /* CV routing.  A static layout is just setting each channel once. */
     cv_matrix.Jack(0).To(param_a);
