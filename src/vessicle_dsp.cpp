@@ -21,10 +21,6 @@ using WindowType = vessl::sample::windows::type;
 namespace vessicle_dsp
 {
 
-/** @todo use CpuLoadMeter for these, gives min/max/avg */
-volatile float process_pct;
-volatile float process_us;
-
 namespace
 {
   ALCHEMY_SRAM constexpr uint8_t parameters_size_ = static_cast<uint8_t>(Parameter::Count);
@@ -71,12 +67,6 @@ void Init(float sample_rate, size_t block_size)
   memset(parameters_, 0, parameters_size_*sizeof(float));
   memset(block_out_, 0, sizeof(float)*SpectralGen::block_size);
   block_out_read_idx_ = SpectralGen::block_size;
-
-  float block_rate_seconds = block_size / sample_rate;
-  process_block_us_max = static_cast<uint32_t>(block_rate_seconds*1000*1000);
-
-  process_us = process_block_us_max;
-  process_pct = 1.0f;
 }
 
 void SetParameter(Parameter param, float value)
@@ -117,8 +107,6 @@ void Process(
   size_t block_size
 )
 {
-  const uint32_t block_start_us = daisy::System::GetUs();
-
   SampleArray in_left(const_cast<float*>(in[0]), block_size);
   SampleArray in_right(const_cast<float*>(in[1]), block_size);
   SampleArray out_left(out[0], block_size);
@@ -143,11 +131,6 @@ void Process(
     }
     rw << block_out_[block_out_read_idx_++];
   }
-
-  const uint32_t block_end_us = daisy::System::GetUs();
-
-  process_us  = block_end_us - block_start_us;
-  process_pct = static_cast<float>(process_us) / process_block_us_max;
 }
 
 } // namespace vessicle_dsp

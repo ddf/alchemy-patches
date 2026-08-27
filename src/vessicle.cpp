@@ -18,6 +18,7 @@
 
 #include "attributes.h"
 #include "debugger.h"
+#include "profiler.h"
 #include "vessicle_dsp.h"
 #include "vessicle_palette.h"
 
@@ -109,6 +110,7 @@ static ALCHEMY_SRAM Settings                          settings(hw, &pager);
 static ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
 static ALCHEMY_SRAM hostlink::Host                    host(presets, "vessicle", "VESSICLE", "0.1.0", "666777");
 static ALCHEMY_SRAM Debugger                          debugger;
+static ALCHEMY_SRAM Profiler::SettingsPage            profilerSettings;
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
@@ -126,14 +128,17 @@ static void UpdateParams()
 int main()
 {
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, vessicle_dsp::GetBlockSize());
+
     vessicle_dsp::Init(hw.SampleRate(), hw.BlockSize());
 
-    debugger.Var(vessicle_dsp::process_us, "dbg.pus", "Process micro")
-            .Range(0, 1000000)
-            .Kind("linear")
-            .Unit("us");
+    Profiler::Init(hw.SampleRate(), hw.BlockSize(), vessicle_dsp::Process);
 
-    debugger.Var(vessicle_dsp::process_pct, "dbg.ppct", "Process %");
+    // debugger.Var(vessicle_dsp::process_us, "dbg.pus", "Process micro")
+    //         .Range(0, 1000000)
+    //         .Kind("linear")
+    //         .Unit("us");
+
+    // debugger.Var(vessicle_dsp::process_pct, "dbg.ppct", "Process %");
 
     /* CV routing.  A static layout is just setting each channel once. */
     cv_matrix.Jack(0).To(param_a);
@@ -151,7 +156,8 @@ int main()
     presets.Manage(pager);
     presets.Manage(locks);
     presets.Manage(settings);
-    presets.Manage(debugger);
+    //presets.Manage(debugger);
+    presets.Manage(profilerSettings);
     presets.UseNames();
 
 
@@ -169,7 +175,7 @@ int main()
     presets.BootLoad();
 
     UpdateParams();
-    hw.StartAudio(vessicle_dsp::Process);
+    hw.StartAudio(Profiler::Process);
 
     for (;;) loop.Tick();
 }
