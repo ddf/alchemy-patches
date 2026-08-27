@@ -8,14 +8,6 @@
 
 namespace vessicle_dsp
 {
-
-// duration of last Process call
-// as a percentage of the maximum time we can take in process
-// (derived from block_size & sample_rate)
-extern volatile float process_pct;
-// duration of the last Process call in milliseconds
-extern volatile float process_us;
-
 enum class Parameter : uint8_t
 {
   A = 0, 
