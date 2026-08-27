@@ -9,6 +9,13 @@
 namespace vessicle_dsp
 {
 
+// duration of last Process call
+// as a percentage of the maximum time we can take in process
+// (derived from block_size & sample_rate)
+extern volatile float process_pct;
+// duration of the last Process call in milliseconds
+extern volatile float process_ms;
+
 enum class Parameter : uint8_t
 {
   A = 0, 
@@ -25,7 +32,7 @@ enum class Parameter : uint8_t
 uint32_t GetBlockSize();
 
  /** Cache the sample rate, allocate resources. Call once after hw.Init(). */
-void Init(float sample_rate);
+void Init(float sample_rate, size_t block_size);
 
 /** Set a parameter value */
 void SetParameter(Parameter param, float value);

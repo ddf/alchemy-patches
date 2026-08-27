@@ -14,8 +14,10 @@
 #include "alchemy/surface/presets.h"
 #include "alchemy/surface/settings.h"
 #include "alchemy/surface/virtual_knob.h"
+#include "alchemy/host_link/host.h"
 
 #include "attributes.h"
+#include "debugger.h"
 #include "vessicle_dsp.h"
 #include "vessicle_palette.h"
 
@@ -105,6 +107,8 @@ static ALCHEMY_SRAM ParamLock<page_count * kNumPots>  locks   (hw.buttons[0], pa
 static ALCHEMY_SRAM Presets                           presets (hw.seed.qspi);
 static ALCHEMY_SRAM Settings                          settings(hw, &pager);
 static ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
+static ALCHEMY_SRAM hostlink::Host                    host(presets, "vessicle", "VESSICLE", "0.1.0", "666777");
+static ALCHEMY_SRAM Debugger                          debugger;
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
@@ -117,12 +121,18 @@ static void UpdateParams()
   vessicle_dsp::SetParameter(vessicle_dsp::Parameter::F, param_f.Value());
 
   vessicle_dsp::Update();
+
+  debugger.SetVar("dbg.pms", 0);
+  //debugger.SetVar("dbg.ppct", 0.5f);
 }
 
 int main()
 {
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, vessicle_dsp::GetBlockSize());
-    vessicle_dsp::Init(hw.SampleRate());
+    vessicle_dsp::Init(hw.SampleRate(), hw.BlockSize());
+
+    debugger.Var(vessicle_dsp::process_ms, "dbg.pms", "Process Ms", "{\"kind\":\"linear\", \"lo\":0,\"hi\":100, \"unit\":\"ms\"}")
+            .Var(0.5f, "dbg.ppct", "Process %");
 
     /* CV routing.  A static layout is just setting each channel once. */
     cv_matrix.Jack(0).To(param_a);
@@ -134,17 +144,15 @@ int main()
 
     /* Opting into default settings gestures and controls.*/
     settings.UseBrightness();
-    settings.UsePresets(presets);
+    settings.UsePresets(presets);       
 
     /* Preset payload — every Serializable surface gets walked on Save/Load. */
     presets.Manage(pager);
     presets.Manage(locks);
     presets.Manage(settings);
-    presets.Init();
-    presets.BootLoad();
+    presets.Manage(debugger);
+    presets.UseNames();
 
-    UpdateParams();
-    hw.StartAudio(vessicle_dsp::Process);
 
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
      * If desired, you can unroll and modify. */
@@ -153,7 +161,14 @@ int main()
         .Use(settings)
         .Use(cv_matrix)
         .Use(page_one)
+        .Use(host)
         .OnFrame(UpdateParams);
+
+    presets.Init();
+    presets.BootLoad();
+
+    UpdateParams();
+    hw.StartAudio(vessicle_dsp::Process);
 
     for (;;) loop.Tick();
 }
