@@ -13,6 +13,7 @@
 #include "alchemy/surface/button_bank.h"
 
 #include "attributes.h"
+#include "profiler.h"
 #include "condolences_dsp.h"
 #include "condolences_gui.h"
 #include "vessl/vessl.h"
@@ -51,6 +52,7 @@ ALCHEMY_SRAM Pager                             pager   (hw.buttons[kButtonB1], p
 ALCHEMY_SRAM ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
 ALCHEMY_SRAM Presets                           presets (hw.seed.qspi);
 ALCHEMY_SRAM Settings                          settings(hw, &pager);
+ALCHEMY_SRAM Profiler                          profiler(hw);
 ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
 ALCHEMY_SRAM hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
 
@@ -411,6 +413,7 @@ int main()
     presets.Manage(locks);
     presets.Manage(settings);
     presets.Manage(density_settings);
+    presets.Manage(profiler);
     //presets.Manage(buttons);
     presets.UseNames();
 
@@ -431,7 +434,7 @@ int main()
     presets.BootLoad();
 
     UpdateParams();
-    hw.StartAudio(condolences::Process);
+    profiler.StartAudio(condolences::Process);
 
     for (;;) loop.Tick();
 }
