@@ -8,8 +8,7 @@
 #include "vessicle_dsp.h"
 #include "vessl/vessl.h"
 #include "SpectralGenerator.h"
-#include "debugger.h"
-#include "sys/system.h"
+#include "profiler.h"
 
 static constexpr size_t SpectrumSize = 4096;
 static constexpr size_t Overlap = 4;
@@ -17,6 +16,7 @@ static constexpr size_t Overlap = 4;
 using SampleArray = vessl::array<float>;
 using SpectralGen = SpectralGenerator<float, SpectrumSize, Overlap>;
 using WindowType = vessl::sample::windows::type;
+using namespace alchemy;
 
 namespace vessicle_dsp
 {
@@ -41,8 +41,8 @@ namespace
   float block_out_[SpectralGen::block_size];
   size_t block_out_read_idx_;
 
-  // approx length of time we have to produce one Process block
-  uint32_t process_block_us_max;
+  Profiler::Timer tm_gen_left("Gen Left");
+  Profiler::Timer tm_gen_right("Gen Right");
 }
 
 uint32_t GetBlockSize()
@@ -112,24 +112,31 @@ void Process(
   SampleArray out_left(out[0], block_size);
   SampleArray out_right(out[1], block_size);
 
-  out_left.fill(0);
-  auto lw = out_left.make_writer();
-  while(lw)
+  
   {
-    float v = spectral_gen_s_->generate();
-    lw << v;
+    Profiler::ScopedTimer st(tm_gen_left);
+    auto lw = out_left.make_writer();
+    while(lw)
+    {
+      float v = spectral_gen_s_->generate();
+      lw << v;
+    }
   }
 
-  auto rw = out_right.make_writer();
-  while(rw)
+
   {
-    if (block_out_read_idx_ == SpectralGen::block_size)
+    Profiler::ScopedTimer st(tm_gen_right);
+    auto rw = out_right.make_writer();
+    while(rw)
     {
-      vessl::array<float> block(block_out_, SpectralGen::block_size);
-      spectral_gen_b_->generate(block);
-      block_out_read_idx_ = 0;
+      if (block_out_read_idx_ == SpectralGen::block_size)
+      {
+        vessl::array<float> block(block_out_, SpectralGen::block_size);
+        spectral_gen_b_->generate(block);
+        block_out_read_idx_ = 0;
+      }
+      rw << block_out_[block_out_read_idx_++];
     }
-    rw << block_out_[block_out_read_idx_++];
   }
 }
 

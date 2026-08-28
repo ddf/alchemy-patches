@@ -26,7 +26,8 @@ TARGET_DSP = $(TARGET_MAIN)_dsp
 # ── App sources — yours to edit ─────────────────────────────────────────────
 CPP_SOURCES = \
     src/$(TARGET_MAIN).cpp \
-    src/$(TARGET_DSP).cpp
+    src/$(TARGET_DSP).cpp \
+    src/profiler.cpp
 
 # ── Alchemy SDK, compiled straight from the submodule ───────────────────────
 CPP_SOURCES += $(sort $(shell find $(ALCHEMY_DIR)/framework/src -name '*.cpp'))
