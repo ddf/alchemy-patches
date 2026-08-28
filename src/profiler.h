@@ -5,10 +5,12 @@
 
 namespace alchemy
 {
-namespace Profiler
+class Profiler : public Serializable
 {
-  void Init(float sampleRateInHz, int blockSizeInSamples, daisy::AudioHandle::AudioCallback user_audio_callback);
-  void Process(daisy::AudioHandle::InputBuffer in, daisy::AudioHandle::OutputBuffer out, size_t block_size);
+public:
+  explicit Profiler(AlchemyLab& hw);
+
+  void StartAudio(daisy::AudioHandle::AudioCallback user_audio_callback);
 
   static constexpr size_t kMaxTimers = 32;
 
@@ -20,7 +22,7 @@ namespace Profiler
     void Stop();
 
   private:
-    friend class SettingsPage;
+    friend class Profiler;
     const char* name_;
     uint16_t idx_;
     uint32_t begin_;
@@ -35,14 +37,14 @@ namespace Profiler
     Timer* th_;
   };
 
-  class SettingsPage : public Serializable
-  {
-  public:
-    size_t SerializedSize() const override { return sizeof(float)*3 + sizeof(float)*kMaxTimers; }
-    void Serialize(uint8_t* out) const override;
-    bool Deserialize(const uint8_t* in) override { return true; } 
-    uint32_t SchemaHash() const override;
-    bool Describe(class hostlink::ComponentWriter& w) const override;
-  };
-} // namespace Profiler
+  // Serializable implementation
+  size_t SerializedSize() const override { return sizeof(float)*3 + sizeof(float)*kMaxTimers; }
+  void Serialize(uint8_t* out) const override;
+  bool Deserialize(const uint8_t* in) override { return true; } 
+  uint32_t SchemaHash() const override;
+  bool Describe(class hostlink::ComponentWriter& w) const override;
+
+private:
+  AlchemyLab* hw_;
+};
 } // namespace alchemy

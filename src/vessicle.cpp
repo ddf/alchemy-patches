@@ -109,8 +109,8 @@ static ALCHEMY_SRAM Presets                           presets (hw.seed.qspi);
 static ALCHEMY_SRAM Settings                          settings(hw, &pager);
 static ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
 static ALCHEMY_SRAM hostlink::Host                    host(presets, "vessicle", "VESSICLE", "0.1.0", "666777");
+static ALCHEMY_SRAM Profiler                          profiler(hw);
 static ALCHEMY_SRAM Debugger                          debugger;
-static ALCHEMY_SRAM Profiler::SettingsPage            profilerSettings;
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
@@ -130,8 +130,6 @@ int main()
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ, vessicle_dsp::GetBlockSize());
 
     vessicle_dsp::Init(hw.SampleRate(), hw.BlockSize());
-
-    Profiler::Init(hw.SampleRate(), hw.BlockSize(), vessicle_dsp::Process);
 
     // debugger.Var(vessicle_dsp::process_us, "dbg.pus", "Process micro")
     //         .Range(0, 1000000)
@@ -157,7 +155,7 @@ int main()
     presets.Manage(locks);
     presets.Manage(settings);
     //presets.Manage(debugger);
-    presets.Manage(profilerSettings);
+    presets.Manage(profiler);
     presets.UseNames();
 
 
@@ -175,7 +173,7 @@ int main()
     presets.BootLoad();
 
     UpdateParams();
-    hw.StartAudio(Profiler::Process);
+    profiler.StartAudio(vessicle_dsp::Process);
 
     for (;;) loop.Tick();
 }
