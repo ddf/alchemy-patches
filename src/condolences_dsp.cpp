@@ -4,6 +4,7 @@
 
 #include "condolences_dsp.h"
 #include "Condolences.h"
+#include "attributes.h"
 
 namespace condolences
 {
@@ -38,20 +39,20 @@ namespace
   
   // shared between both instances of Condol.  
   sample_t input_window[Condol::AnalysisSize];
-  sample_t input_analysis[Condol::AnalysisSize];
 
-  // split between the two instances of Condol
-  sample_t input_buffer[Condol::AnalysisSize*2];
-  complex_t input_spectrum[Condol::AnalysisSize];
+  sample_t condol_left_input_analysis[Condol::AnalysisSize];
+  complex_t condol_left_spectrum[Condol::AnalysisSize/2];
+
+  sample_t condol_right_input_analysis[Condol::AnalysisSize];
+  complex_t condol_right_spectrum[Condol::AnalysisSize/2];
+
+  ALCHEMY_SRAM FrequencyBand output_bands[SpectrumSize];
+  ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
 
   sample_t output_window[SpectrumSize];
-  complex_t output_spectrum[SpectrumSize];
-  FrequencyBand output_bands[SpectrumSize];
 
-  constexpr size_t sample_data_count = SpectrumSize*Overlap*2*2;
-  // this _might_ fit into DTCMRAM with everything else if we can switch to int16_t for sample type.
-  // altho, if we then bumped up spectrum size to 4096, we'd probably run out of space again.
-  // sample_t output_sample_data[SpectrumSize*Overlap*2*2];
+  constexpr size_t sample_data_count = SpectrumSize*2*2;
+  //ALCHEMY_SRAM sample_t output_sample_data[sample_data_count];
   sample_t* output_sample_data = nullptr;
 
   // we allocate these, but don't directly modify them
@@ -82,15 +83,17 @@ void Init(float sample_rate)
   SpectralData data0 = {
     vessl::array<FrequencyBand>(output_bands, SpectrumSize/2),
     vessl::array<complex_t>(output_spectrum, SpectrumSize/2),
-    vessl::array<sample_t>(output_sample_data, SpectrumSize*Overlap*2),
-    vessl::array<sample_t>(output_window, SpectrumSize)
+    vessl::array<sample_t>(output_sample_data, SpectrumSize),
+    vessl::array<sample_t>(output_window, SpectrumSize),
+    vessl::array<sample_t>(output_sample_data + SpectrumSize, SpectrumSize)
   };
 
   SpectralData data1 = {
     vessl::array<FrequencyBand>(output_bands + data0.bands.size(), data0.bands.size()),
     vessl::array<complex_t>(output_spectrum + data0.spectrum.size(), data0.spectrum.size()),
-    vessl::array<sample_t>(output_sample_data + data0.signal.size(), data0.signal.size()),
-    vessl::array<sample_t>(output_window, SpectrumSize)
+    vessl::array<sample_t>(output_sample_data + SpectrumSize*2, SpectrumSize),
+    vessl::array<sample_t>(output_window, SpectrumSize),
+    vessl::array<sample_t>(output_sample_data + SpectrumSize*3, SpectrumSize)
   };
 
   spectral_[0] = new SpectralGen(data0, sample_rate);
@@ -102,18 +105,16 @@ void Init(float sample_rate)
   condolences_[0] = new Condol(
     sample_rate, 
     input_window, 
-    input_buffer, 
-    input_analysis, 
-    input_spectrum, 
+    condol_left_input_analysis, 
+    condol_left_spectrum,
     sympathies_[0]
   );
 
   condolences_[1] = new Condol(
     sample_rate, 
-    input_window, 
-    input_buffer + Condol::AnalysisSize, 
-    input_analysis, 
-    input_spectrum + Condol::AnalysisSize,
+    input_window,
+    condol_right_input_analysis,
+    condol_right_spectrum,
     sympathies_[1]
   );
 
