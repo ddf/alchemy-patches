@@ -31,6 +31,7 @@
               pkgs.gcc-arm-embedded
               pkgs.ninja
               pkgs.dfu-util
+              pkgs.nodejs
             ];
 
 
