@@ -3,6 +3,8 @@
 #include "alchemy/hw/alchemy_lab.h"
 #include "alchemy/surface/serializable.h"
 
+/** @todo move this down into the SDK and make a PR */
+/** @todo add build flag that effectively compiles this out. */
 namespace alchemy
 {
 class Profiler : public Serializable
