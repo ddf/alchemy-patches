@@ -46,15 +46,15 @@ constexpr size_t page_count = 2;
 /* Get our SDK surfaces and opt in to everything.
  * Not declared static so condolences_gui.h can reference hw and pager.
  */
-ALCHEMY_SRAM AlchemyLab                        hw;
-ALCHEMY_SRAM ControlLoop                       loop    (hw);
-ALCHEMY_SRAM Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
-ALCHEMY_SRAM ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
-ALCHEMY_SRAM Presets                           presets (hw.seed.qspi);
-ALCHEMY_SRAM Settings                          settings(hw, &pager);
-ALCHEMY_SRAM Profiler                          profiler(hw);
-ALCHEMY_SRAM CvMatrix                          cv_matrix(kNumCvInputs);
-ALCHEMY_SRAM hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
+AlchemyLab                        hw;
+ControlLoop                       loop    (hw);
+Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
+ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
+Presets                           presets (hw.seed.qspi);
+Settings                          settings(hw, &pager);
+Profiler                          profiler(hw);
+CvMatrix                          cv_matrix(kNumCvInputs);
+hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Settings
