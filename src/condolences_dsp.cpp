@@ -39,17 +39,21 @@ namespace
   
   // shared between both instances of Condol.  
   sample_t input_window[Condol::AnalysisSize];
-
-  sample_t condol_left_input_analysis[Condol::AnalysisSize];
+  sample_t condol_left_input_record[Condol::AnalysisSize];
   complex_t condol_left_spectrum[Condol::AnalysisSize/2];
 
-  sample_t condol_right_input_analysis[Condol::AnalysisSize];
+  sample_t condol_right_input_record[Condol::AnalysisSize];
   complex_t condol_right_spectrum[Condol::AnalysisSize/2];
+
+  sample_t condol_left_input_analysis[Condol::AnalysisSize];
+  sample_t condol_right_input_analysis[Condol::AnalysisSize];
 
   ALCHEMY_SRAM FrequencyBand output_bands[SpectrumSize];
   ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
 
   sample_t output_window[SpectrumSize];
+  sample_t condol_left_output_buffer[Sympathies::overlap_size];
+  sample_t condol_right_output_buffer[Sympathies::overlap_size];
 
   constexpr size_t sample_data_count = SpectrumSize*2*2;
   //ALCHEMY_SRAM sample_t output_sample_data[sample_data_count];
@@ -104,17 +108,21 @@ void Init(float sample_rate)
 
   condolences_[0] = new Condol(
     sample_rate, 
-    input_window, 
+    input_window,
+    condol_left_input_record, 
     condol_left_input_analysis, 
     condol_left_spectrum,
+    condol_left_output_buffer,
     sympathies_[0]
   );
 
   condolences_[1] = new Condol(
     sample_rate, 
     input_window,
+    condol_right_input_record,
     condol_right_input_analysis,
     condol_right_spectrum,
+    condol_right_output_buffer,
     sympathies_[1]
   );
 

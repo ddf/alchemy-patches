@@ -377,7 +377,7 @@ static void UpdateParams()
 
   condolences::Mode mode = static_cast<condolences::Mode>(settings.SelectorIdxAt(mode_page, mode_pot));
   condolences::SetMode(mode);
-  condolences::SetSensitivity(0.4f, 0.4f);
+  condolences::SetSensitivity(0.9f, 0.9f);
   condolences::Update();
 }
 

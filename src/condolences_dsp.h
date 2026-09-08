@@ -7,11 +7,6 @@
 
 namespace condolences
 {
-    /**
-     * Turns out we can run at 4096 and with overlap of 4 (though this shrinks the analysis spectrum).
-     * The issue now is that if we reduce the overlap, the spectrum blows up and we get crazy loud feedback.
-     * This is probably down to magnitude scaling being incorrect in one or more places.
-     */
     static constexpr size_t SpectrumSize = 4096;
     static constexpr size_t Overlap = 4;
 
