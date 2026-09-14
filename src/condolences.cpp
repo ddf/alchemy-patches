@@ -27,7 +27,8 @@ using namespace alchemy;
  *  @todo use clip indicator
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
  *  @todo implement Help documentation
- *  @todo expose sensitivity either on a knob or in settings OR set it based on other parameters.
+ *  @todo expose sensitivity either on a knob or in settings OR set it based on other parameters
+ *  @todo fix audio drop-out when Warp is turned all the way up.
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
@@ -60,13 +61,15 @@ hostlink::Host                    host(presets, "condolences", "Condolences", "0
 // Settings
 constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
+constexpr float decay_min        = 0.5f;
+constexpr float decay_max        = 10.f;
 
 struct DensitySettings : Serializable
 {
-  static constexpr float band_min_default = (8.f - band_density_min) / (band_density_max - band_density_min);
+  static constexpr float band_min_default = (24.f - band_density_min) / (band_density_max - band_density_min);
   static constexpr float band_max_default = (band_density_max - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float spread_min_dafault = 1.0f;
-  static constexpr float spread_max_default = 1.0f;
+  static constexpr float spread_min_dafault = 0.0f;
+  static constexpr float spread_max_default = 0.6f;
 
   /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
   float band_min = band_min_default;
@@ -145,12 +148,12 @@ static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
 // in seconds, sensible minimum value depends on spectrum size and sample rate
 ALCHEMY_SRAM
 static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
-  .Exp(0.1f, 10.f).Unit("s").Ident("decay.left")
+  .Linear(0.f, 1.f).Unit("s").Ident("decay.left")
   .Ring(vibe_spec);
 
 ALCHEMY_SRAM
 static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
-  .Exp(0.1f, 10.f).Unit("s").Ident("decay.right")
+  .Linear(0.f, 1.f).Unit("s").Ident("decay.right")
   .Ring(vibe_spec);
 
 ALCHEMY_SRAM  
@@ -327,20 +330,31 @@ static void UpdateParams()
   // when control both with skew
   if(skew)
   {
+    // decay
+    float decsk = GetSkewValue(vk_decay_skew);
+    float decl  = vessl::math::constrain(vk_decay.Value() - decsk, 0.f, 1.f);
+    float decr  = vessl::math::constrain(vk_decay.Value() + decsk, 0.f, 1.f);
+
+    // density
     float dsk = GetSkewValue(vk_density_skew);
     float dtl = vessl::math::constrain(vk_density.Value() - dsk, 0.f, 1.f);
     float dtr = vessl::math::constrain(vk_density.Value() + dsk, 0.f, 1.f);
-    float stl = dtl;
-    float str = dtr;
+
+    // spread (controlled by decay)
+    float stl = 1.0f - decl;
+    float str = 1.0f - decr;
+
+    float decay_l   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, decl);
+    float decay_r   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, decr);
     float density_l = vessl::math::lerp(dmin, dmax, dtl);
     float density_r = vessl::math::lerp(dmin, dmax, dtr);
     float spread_l  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, stl);
     float spread_r  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, str);
+
     condolences::SetDensity(density_l, density_r);
+    condolences::SetDecay(decay_l, decay_r);
     condolences::SetSpread(spread_l, spread_r);
 
-    float decay = vk_decay.Value();
-    float decsk = GetSkewValue(vk_decay_skew);
     float warp  = vk_warp.Value();
     float warsk = GetSkewValue(vk_warp_skew);
     float smear = vk_smear.Value();
@@ -349,7 +363,6 @@ static void UpdateParams()
     float melsk = GetSkewValue(vk_melt_skew);
     float mix   = vk_mix.Value();
     float mixsk = GetSkewValue(vk_mix_skew);
-    condolences::SetDecay(decay * 1.f - decsk, decay * 1.f + decsk);
     condolences::SetSpacing(warp * 1.f - warsk, warp * 1.f + warsk);
     condolences::SetSmear(smear * 1.f - smesk, smear * 1.f + smesk);
     condolences::SetMelt(melt * 1.f - melsk, melt * 1.f + melsk);
@@ -360,15 +373,21 @@ static void UpdateParams()
   {
     float dtl = vk_density_l.Value();
     float dtr = vk_density_r.Value();
-    float stl = dtl;
-    float str = dtr;
+    float dcl = vk_decay_l.Value();
+    float dcr = vk_decay_r.Value();
+    float stl = 1.0f - dcl;
+    float str = 1.0f - dcr;
+
+    float decay_l   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, dcl);
+    float decay_r   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, dcr);
     float density_l = vessl::math::lerp(dmin, dmax, dtl);
     float density_r = vessl::math::lerp(dmin, dmax, dtr);
     float spread_l  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, stl);
     float spread_r  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, str);
+
     condolences::SetDensity(density_l, density_r);
     condolences::SetSpread(spread_l, spread_r);
-    condolences::SetDecay(vk_decay_l.Value(), vk_decay_r.Value());
+    condolences::SetDecay(decay_l, decay_r);
     condolences::SetSpacing(vk_warp_l.Value(), vk_warp_r.Value());
     condolences::SetSmear(vk_smear_l.Value(), vk_smear_r.Value());
     condolences::SetMix(vk_mix_l.Value(), vk_mix_r.Value());
@@ -377,7 +396,7 @@ static void UpdateParams()
 
   condolences::Mode mode = static_cast<condolences::Mode>(settings.SelectorIdxAt(mode_page, mode_pot));
   condolences::SetMode(mode);
-  condolences::SetSensitivity(0.9f, 0.9f);
+  condolences::SetSensitivity(0.1f, 0.1f);
   condolences::Update();
 }
 
