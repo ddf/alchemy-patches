@@ -40,13 +40,13 @@ namespace
   // shared between both instances of Condol.  
   sample_t input_window[Condol::AnalysisSize];
   sample_t condol_left_input_record[Condol::AnalysisSize];
-  complex_t condol_left_spectrum[Condol::AnalysisSize/2];
+  ALCHEMY_SRAM complex_t condol_left_spectrum[Condol::AnalysisSize/2];
 
   sample_t condol_right_input_record[Condol::AnalysisSize];
-  complex_t condol_right_spectrum[Condol::AnalysisSize/2];
+  ALCHEMY_SRAM complex_t condol_right_spectrum[Condol::AnalysisSize/2];
 
-  sample_t condol_left_input_analysis[Condol::AnalysisSize];
-  sample_t condol_right_input_analysis[Condol::AnalysisSize];
+  ALCHEMY_SRAM sample_t condol_left_input_analysis[Condol::AnalysisSize];
+  ALCHEMY_SRAM sample_t condol_right_input_analysis[Condol::AnalysisSize];
 
   ALCHEMY_SRAM FrequencyBand output_bands[SpectrumSize];
   ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
