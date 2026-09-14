@@ -64,7 +64,7 @@ constexpr float band_density_max = condolences::GetDensityMax();
 struct DensitySettings : Serializable
 {
   static constexpr float band_min_default = (8.f - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float band_max_default = (32.f - band_density_min) / (band_density_max - band_density_min);
+  static constexpr float band_max_default = (band_density_max - band_density_min) / (band_density_max - band_density_min);
   static constexpr float spread_min_dafault = 1.0f;
   static constexpr float spread_max_default = 1.0f;
 
