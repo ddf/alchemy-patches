@@ -55,6 +55,8 @@ namespace
   sample_t condol_left_output_buffer[Sympathies::overlap_size];
   sample_t condol_right_output_buffer[Sympathies::overlap_size];
 
+  sample_t sympa_scratch[SpectrumSize];
+
   constexpr size_t sample_data_count = SpectrumSize*2*2;
   //ALCHEMY_SRAM sample_t output_sample_data[sample_data_count];
   sample_t* output_sample_data = nullptr;
@@ -103,8 +105,8 @@ void Init(float sample_rate)
   spectral_[0] = new SpectralGen(data0, sample_rate);
   spectral_[1] = new SpectralGen(data1, sample_rate);
 
-  sympathies_[0] = new Sympathies(spectral_[0], sample_rate);
-  sympathies_[1] = new Sympathies(spectral_[1], sample_rate);
+  sympathies_[0] = new Sympathies(spectral_[0], sample_rate, sympa_scratch);
+  sympathies_[1] = new Sympathies(spectral_[1], sample_rate, sympa_scratch);
 
   condolences_[0] = new Condol(
     sample_rate, 
