@@ -55,7 +55,7 @@ Presets                           presets (hw.seed.qspi);
 Settings                          settings(hw, &pager);
 Profiler                          profiler(hw);
 CvMatrix                          cv_matrix(kNumCvInputs);
-hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.0", "abcdefg");
+hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Settings
@@ -145,15 +145,14 @@ static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
   .Linear(0.f, 1.f).Ident("density.right")
   .Ring(vibe_spec);
 
-// in seconds, sensible minimum value depends on spectrum size and sample rate
 ALCHEMY_SRAM
 static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
-  .Linear(0.f, 1.f).Unit("s").Ident("decay.left")
+  .Linear(0.f, 1.f).Ident("decay.left")
   .Ring(vibe_spec);
 
 ALCHEMY_SRAM
 static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
-  .Linear(0.f, 1.f).Unit("s").Ident("decay.right")
+  .Linear(0.f, 1.f).Ident("decay.right")
   .Ring(vibe_spec);
 
 ALCHEMY_SRAM  
