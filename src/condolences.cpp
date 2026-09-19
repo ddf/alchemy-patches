@@ -166,6 +166,12 @@ static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Sympathy Skew")
   .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
 
 ALCHEMY_SRAM  
+static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Shift Skew")
+  .Ident("shift.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_shift_skew));
+
+ALCHEMY_SRAM  
 static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
   .Ident("warp.skew")
   .Linear(-0.5f, 0.5f)
@@ -211,6 +217,12 @@ static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
 
 ALCHEMY_SRAM  
+static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Shift")
+  .Ident("shift.both")
+  .Linear(-1.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_shift_skew));
+
+ALCHEMY_SRAM  
 static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
   .Ident("warp.both")
   .Linear(0.f, 1.f)
@@ -237,7 +249,7 @@ static Page vibe_page = Page(0).Name("Vibe")
 ALCHEMY_SRAM  
 static Page rizz_page = Page(1).Name("Rizz")
   .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_warp, vk_melt, vk_smear);
+  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear);
 
 //////////////////////////////////////////////////////////////////////
 // button, button, whose got the button?
@@ -298,6 +310,8 @@ static void UpdateParams()
     float sensk = GetSkewValue(vk_sensitivity_skew);
     float sensl = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens - sensk), sensi_min, sensi_max);
     float sensr = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens + sensk), sensi_min, sensi_max);
+    float shft  = vk_shift.Value();
+    float shfsk = GetSkewValue(vk_shift_skew);
     float warp  = vk_warp.Value();
     float warsk = GetSkewValue(vk_warp_skew);
     float smear = vk_smear.Value();
@@ -307,6 +321,7 @@ static void UpdateParams()
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
     condolences::SetSensitivity(sensl, sensr);
+    condolences::SetShift(shft - shfsk, shft + shfsk);
     condolences::SetSpacing(warp - warsk, warp + warsk);
     condolences::SetSmear(smear - smesk, smear + smesk);
     condolences::SetMelt(melt - melsk, melt + melsk);
