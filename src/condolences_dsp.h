@@ -33,6 +33,7 @@ namespace condolences
     void SetSpread(float x, float y);
     void SetDecay(float x, float y);
     void SetSensitivity(float x, float y);
+    void SetShift(float x, float y);
     void SetSpacing(float x, float y);
     void SetMelt(float x, float y);
     void SetSmear(float x, float y);

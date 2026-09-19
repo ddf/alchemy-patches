@@ -169,6 +169,12 @@ void SetSensitivity(float x, float y)
   condolences_[1]->sensitivity() = vessl::math::clamp_delta(y);
 }
 
+void SetShift(float x, float y)
+{
+  condolences_[0]->shift() = vessl::math::constrain(x, -1.f, 1.f);
+  condolences_[1]->shift() = vessl::math::constrain(y, -1.f, 1.f);
+}
+
 void SetSpacing(float x, float y)
 {
   condolences_[0]->spacing() = vessl::math::clamp_delta(x);
