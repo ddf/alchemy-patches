@@ -165,8 +165,8 @@ void SetDecay(float x, float y)
 
 void SetSensitivity(float x, float y)
 {
-  condolences_[0]->sensitivity() = x;
-  condolences_[1]->sensitivity() = y;
+  condolences_[0]->sensitivity() = vessl::math::clamp_delta(x);
+  condolences_[1]->sensitivity() = vessl::math::clamp_delta(y);
 }
 
 void SetSpacing(float x, float y)
@@ -255,12 +255,12 @@ void Process(
   mix_smooth_[1] = mix_[1];
   
   float l,r;
-  float ml = mix_smooth_[0].value;
-  float mr = mix_smooth_[1].value;
+  const float dry = mix_smooth_[0].value;
+  const float wet = mix_smooth_[1].value;
   for(size_t i = 0; i < block_size; ++i)
   {
-    vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_left[i], out_left[i], ml, &l);
-    vessl::sample::crossfade<vessl::math::easing::quad::in_out>(in_right[i], out_right[i], mr, &r);
+    l = in_left[i]*dry + out_left[i]*wet;
+    r = in_right[i]*dry + out_right[i]*wet;
     out_left[i] = limiter_[0].process(l);
     out_right[i] = limiter_[1].process(r);
   }

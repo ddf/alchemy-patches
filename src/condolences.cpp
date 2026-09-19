@@ -27,20 +27,10 @@ using namespace alchemy;
  *  @todo use clip indicator
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
  *  @todo implement Help documentation
- *  @todo expose sensitivity either on a knob or in settings OR set it based on other parameters
- *  @todo fix audio drop-out when Warp is turned all the way up.
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
  *  @todo parameter for smear LFO speed and depth?
- *  @todo parameter for blending between exponential decay and linear decay?
- *  @todo second page could be "sub" parameters of what's on the first page, so:
- *        - density -> spread
- *        - decay -> exp to lin
- *        - warp -> compress (reduce size of mapped to range in the sympathies)
- *        - smear -> LFO speed
- *        - melt -> LFO depth or maybe larger jump to band below?
- *        - mix -> control over crossfade curve 
  */
 constexpr size_t page_count = 2;
 
@@ -61,15 +51,17 @@ hostlink::Host                    host(presets, "condolences", "Condolences", "0
 // Settings
 constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
+constexpr float sensi_min        = 0.1f;
+constexpr float sensi_max        = 0.98f;
 constexpr float decay_min        = 0.5f;
-constexpr float decay_max        = 10.f;
+constexpr float decay_max        = 60.f;
 
 struct DensitySettings : Serializable
 {
   static constexpr float band_min_default = (24.f - band_density_min) / (band_density_max - band_density_min);
   static constexpr float band_max_default = (band_density_max - band_density_min) / (band_density_max - band_density_min);
   static constexpr float spread_min_dafault = 0.0f;
-  static constexpr float spread_max_default = 0.6f;
+  static constexpr float spread_max_default = 1.0f;
 
   /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
   float band_min = band_min_default;
@@ -135,85 +127,43 @@ static void ConfigureSettings()
 
 /////////////////////////////////////////////////////////////////////////////
 // Knobs
-ALCHEMY_SRAM
-static VirtualKnob vk_density_l = VirtualKnob(kPotTopLeft, "Density Left")
-  .Linear(0.f, 1.f).Ident("density.left")
-  .Ring(vibe_spec);
-
-ALCHEMY_SRAM
-static VirtualKnob vk_density_r = VirtualKnob(kPotTopRight, "Density Right")
-  .Linear(0.f, 1.f).Ident("density.right")
-  .Ring(vibe_spec);
-
-ALCHEMY_SRAM
-static VirtualKnob vk_decay_l = VirtualKnob(kPotMiddleLeft, "Decay Left")
-  .Linear(0.f, 1.f).Ident("decay.left")
-  .Ring(vibe_spec);
-
-ALCHEMY_SRAM
-static VirtualKnob vk_decay_r = VirtualKnob(kPotMiddleRight, "Decay Right")
-  .Linear(0.f, 1.f).Ident("decay.right")
-  .Ring(vibe_spec);
-
 ALCHEMY_SRAM  
-static VirtualKnob vk_mix_l = VirtualKnob(kPotBottomLeft, "Mix Left")
-  .Linear(0.f, 1.f).Ident("mix.left")
+static VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, "Dry")
+  .Ident("mix.dry")
+  .Linear(0.f, 1.f)
   .Ring(vibe_spec);
 
 ALCHEMY_SRAM
-static VirtualKnob vk_mix_r = VirtualKnob(kPotBottomRight, "Mix Right")
-  .Linear(0.f, 1.f).Ident("mix.right")
+static VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
+  .Ident("mix.wet")
+  .Linear(0.f, 1.f)
   .Ring(vibe_spec);
-
-ALCHEMY_SRAM  
-static VirtualKnob vk_warp_l = VirtualKnob(kPotTopLeft, "Warp Left")
-  .Linear(0.f, 1.f).Ident("warp.left")
-  .Ring(rizz_spec);
-
-ALCHEMY_SRAM
-static VirtualKnob vk_warp_r = VirtualKnob(kPotTopRight, "Warp Right")
-  .Linear(0.f, 1.f).Ident("warp.right")
-  .Ring(rizz_spec);
-
-ALCHEMY_SRAM
-static VirtualKnob vk_smear_l = VirtualKnob(kPotMiddleLeft, "Smear Left")
-  .Linear(0.f, 1.f).Ident("smear.left")
-  .Ring(rizz_spec);
-
-ALCHEMY_SRAM  
-static VirtualKnob vk_smear_r = VirtualKnob(kPotMiddleRight, "Smear Right")
-  .Linear(0.f, 1.f).Ident("smear.right")
-  .Ring(rizz_spec);
-
-ALCHEMY_SRAM  
-static VirtualKnob vk_melt_l = VirtualKnob(kPotBottomLeft, "Melt Left")
-  .Linear(0.f, 1.f).Ident("melt.left")
-  .Ring(rizz_spec);
-
-ALCHEMY_SRAM  
-static VirtualKnob vk_melt_r = VirtualKnob(kPotBottomRight, "Melt Right")
-  .Linear(0.f, 1.f).Ident("melt.right")
-  .Ring(rizz_spec);
 
 ///////////////////////////////////////////////////////////////////////
 // Skew Knobs
 ALCHEMY_SRAM
-static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Density Skew")
-  .Ident("density.skew")
+static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Depth Skew")
+  .Ident("depth.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_density_skew));
 
-ALCHEMY_SRAM  
-static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Decay Skew")
-  .Ident("decay.skew")
+ALCHEMY_SRAM
+static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Breadth Skew")
+  .Ident("breadth.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
+  .Ring(Custom(DrawSkewKnob, &vk_spread_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_mix_skew = VirtualKnob(kPotBottomLeft, "Mix Skew")
-  .Ident("mix.skew")
+static VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, "Empathy Skew")
+  .Ident("sensi.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_mix_skew));
+  .Ring(Custom(DrawSkewKnob, &vk_sensitivity_skew));
+
+ALCHEMY_SRAM  
+static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Sympathy Skew")
+  .Ident("sympa.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
@@ -235,64 +185,59 @@ static VirtualKnob vk_melt_skew = VirtualKnob(kPotBottomRight, "Melt Skew")
 
 /////////////////////////////////////////////////////////////////////////
 // Param Knobs which get skewed
-
 ALCHEMY_SRAM
-static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Density")
-  .Ident("density.both")
+static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Depth")
+  .Ident("depth.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
 
-// in seconds, sensible minimum value depends on spectrum size and sample rate
 ALCHEMY_SRAM
-static VirtualKnob vk_decay = VirtualKnob(kPotMiddleLeft, "Decay")
-  .Ident("decay.both")
-  .Exp(0.1f, 10.f).Unit("s")
-  .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
+static VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Breadth")
+  .Ident("breadth.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_spread_skew));
 
 ALCHEMY_SRAM
-static VirtualKnob vk_mix = VirtualKnob(kPotBottomLeft, "Mix")
-  .Ident("mix.both")
+static VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, "Empathy")
+  .Ident("sensi.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_mix_skew));
+  .Ring(Custom(DrawKnobWithSkew, &vk_sensitivity_skew));
+
+// in seconds, sensible minimum value depends on spectrum size and sample rate
+ALCHEMY_SRAM
+static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
+  .Ident("sympa.both")
+  .Exp(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
   .Ident("warp.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_warp_skew));
-  
+
+ALCHEMY_SRAM  
+static VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, "Melt")
+  .Ident("melt.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_melt_skew));
+
 ALCHEMY_SRAM  
 static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ident("smear.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
 
-ALCHEMY_SRAM  
-static VirtualKnob vk_melt = VirtualKnob(kPotBottomRight, "Melt")
-  .Ident("melt.both")
-  .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_melt_skew));
-
 // /* Bind knobs to page */
-ALCHEMY_SRAM
-static Page left_page  = Page(0).Name("Left")
-  .Color(vessicle::palette::Fuschia.active.hex)
-  .Knobs(vk_density_l, vk_density_r, vk_decay_l, vk_decay_r, vk_mix_l, vk_mix_r);
-
-ALCHEMY_SRAM  
-static Page right_page = Page(1).Name("Right")
-  .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_warp_l, vk_warp_r, vk_smear_l, vk_smear_r, vk_melt_l, vk_melt_r);
-
 ALCHEMY_SRAM  
 static Page vibe_page = Page(0).Name("Vibe")
   .Color(vessicle::palette::Fuschia.active.hex)
-  .Knobs(vk_density, vk_decay, vk_mix, vk_warp, vk_melt, vk_smear);
+  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
 
 ALCHEMY_SRAM  
 static Page rizz_page = Page(1).Name("Rizz")
   .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_density_skew, vk_decay_skew, vk_mix_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew);
+  .Knobs(vk_warp, vk_melt, vk_smear);
 
 //////////////////////////////////////////////////////////////////////
 // button, button, whose got the button?
@@ -305,16 +250,16 @@ static ButtonBank buttons;
 
 static void OnPoll(uint32_t t_ms)
 {
-  if (pager.Page() == 0 && IsShiftPressed())
-  {
-    SetShiftEnabled(true);
-    pager.GoToPage(1, loop.Phys());
-  }
-  else if (pager.Page() == 1 && IsShiftEnabled() && !IsShiftPressed())
-  {
-    SetShiftEnabled(false);
-    pager.GoToPage(0, loop.Phys());
-  }
+  // if (pager.Page() == 0 && IsShiftPressed())
+  // {
+  //   SetShiftEnabled(true);
+  //   pager.GoToPage(1, loop.Phys());
+  // }
+  // else if (pager.Page() == 1 && IsShiftEnabled() && !IsShiftPressed())
+  // {
+  //   SetShiftEnabled(false);
+  //   pager.GoToPage(0, loop.Phys());
+  // }
 }
 
 /* summed CV+knob values → DSP each frame */
@@ -322,12 +267,6 @@ static void UpdateParams()
 {
   const float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
   const float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
-
-  /** @todo expose this on a setting or a knob */
-  bool skew = true;
-  
-  // when control both with skew
-  if(skew)
   {
     // decay
     float decsk = GetSkewValue(vk_decay_skew);
@@ -339,9 +278,10 @@ static void UpdateParams()
     float dtl = vessl::math::constrain(vk_density.Value() - dsk, 0.f, 1.f);
     float dtr = vessl::math::constrain(vk_density.Value() + dsk, 0.f, 1.f);
 
-    // spread (controlled by decay)
-    float stl = 1.0f - decl;
-    float str = 1.0f - decr;
+    // spread
+    float ssk = GetSkewValue(vk_spread_skew);
+    float stl = vessl::math::constrain(vk_spread.Value() - ssk, 0.f, 1.f);
+    float str = vessl::math::constrain(vk_spread.Value() + ssk, 0.f, 1.f);
 
     float decay_l   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, decl);
     float decay_r   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, decr);
@@ -354,49 +294,24 @@ static void UpdateParams()
     condolences::SetDecay(decay_l, decay_r);
     condolences::SetSpread(spread_l, spread_r);
 
+    float sens  = vk_sensitivity.Value();
+    float sensk = GetSkewValue(vk_sensitivity_skew);
+    float sensl = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens - sensk), sensi_min, sensi_max);
+    float sensr = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens + sensk), sensi_min, sensi_max);
     float warp  = vk_warp.Value();
     float warsk = GetSkewValue(vk_warp_skew);
     float smear = vk_smear.Value();
     float smesk = GetSkewValue(vk_smear_skew);
     float melt  = vk_melt.Value();
     float melsk = GetSkewValue(vk_melt_skew);
-    float mix   = vk_mix.Value();
-    float mixsk = GetSkewValue(vk_mix_skew);
-    condolences::SetSpacing(warp * 1.f - warsk, warp * 1.f + warsk);
-    condolences::SetSmear(smear * 1.f - smesk, smear * 1.f + smesk);
-    condolences::SetMelt(melt * 1.f - melsk, melt * 1.f + melsk);
-    condolences::SetMix(mix * 1.f - mixsk, mix * 1.f + mixsk);
+    float mixd  = vk_mix_dry.Value();
+    float mixw  = vk_mix_wet.Value();
+    condolences::SetSensitivity(sensl, sensr);
+    condolences::SetSpacing(warp - warsk, warp + warsk);
+    condolences::SetSmear(smear - smesk, smear + smesk);
+    condolences::SetMelt(melt - melsk, melt + melsk);
+    condolences::SetMix(mixd, mixw);
   }
-  // when controlling left and right independently
-  else
-  {
-    float dtl = vk_density_l.Value();
-    float dtr = vk_density_r.Value();
-    float dcl = vk_decay_l.Value();
-    float dcr = vk_decay_r.Value();
-    float stl = 1.0f - dcl;
-    float str = 1.0f - dcr;
-
-    float decay_l   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, dcl);
-    float decay_r   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, dcr);
-    float density_l = vessl::math::lerp(dmin, dmax, dtl);
-    float density_r = vessl::math::lerp(dmin, dmax, dtr);
-    float spread_l  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, stl);
-    float spread_r  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, str);
-
-    condolences::SetDensity(density_l, density_r);
-    condolences::SetSpread(spread_l, spread_r);
-    condolences::SetDecay(decay_l, decay_r);
-    condolences::SetSpacing(vk_warp_l.Value(), vk_warp_r.Value());
-    condolences::SetSmear(vk_smear_l.Value(), vk_smear_r.Value());
-    condolences::SetMix(vk_mix_l.Value(), vk_mix_r.Value());
-    condolences::SetMelt(vk_melt_l.Value(), vk_melt_r.Value());
-  }
-
-  condolences::Mode mode = static_cast<condolences::Mode>(settings.SelectorIdxAt(mode_page, mode_pot));
-  condolences::SetMode(mode);
-  condolences::SetSensitivity(0.1f, 0.1f);
-  condolences::Update();
 }
 
 int main()
