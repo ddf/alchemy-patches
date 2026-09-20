@@ -56,8 +56,8 @@ constexpr float decay_min        = 0.5f;
 constexpr float decay_max        = 60.f;
 constexpr float motio_min        = 0.05f;
 constexpr float motio_max        = 1.0f;
-constexpr float smear_min        = 1.0f;
-constexpr float smear_max        = 32.f;
+constexpr float smear_min        = 0.25f;
+constexpr float smear_max        = 4.0f;
 constexpr float rippl_min        = 0.f;
 constexpr float rippl_max        = 1.f;
 
@@ -171,7 +171,7 @@ static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Sympathy Skew")
   .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Shift Skew")
+static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
   .Ident("shift.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_shift_skew));
@@ -195,13 +195,13 @@ static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ring(Custom(DrawSkewKnob, &vk_smear_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Ripple Skew")
+static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
   .Ident("ripple.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_ripple_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Motion Skew")
+static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_motion_skew));
@@ -234,7 +234,7 @@ static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Shift")
+static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
   .Ident("shift.both")
   .Linear(-1.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_shift_skew));
@@ -258,21 +258,21 @@ static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Ripple")
+static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
   .Ident("ripple.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_ripple_skew));
 
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Motion")
+static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
   .Ident("motion.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_motion_skew));
 
 // /* Bind knobs to page */
 ALCHEMY_SRAM  
-static Page vibe_page = Page(0).Name("Vibe")
+static Page vibe_page = Page(0).Name("Vibes")
   .Color(vessicle::palette::Fuschia.active.hex)
   .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
 
