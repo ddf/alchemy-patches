@@ -36,6 +36,7 @@ namespace condolences
     void SetShift(float x, float y);
     void SetSpacing(float x, float y);
     void SetMelt(float x, float y);
+    void SetRipple(float x, float y);
     void SetSmear(float x, float y);
     void SetMotion(float x, float y);
     void SetMix(float x, float y);
