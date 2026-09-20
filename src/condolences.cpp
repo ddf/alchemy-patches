@@ -55,6 +55,10 @@ constexpr float sensi_min        = 0.1f;
 constexpr float sensi_max        = 0.98f;
 constexpr float decay_min        = 0.5f;
 constexpr float decay_max        = 60.f;
+constexpr float motio_min        = 0.05f;
+constexpr float motio_max        = 1.0f;
+constexpr float smear_min        = 1.0f;
+constexpr float smear_max        = 32.f;
 
 struct DensitySettings : Serializable
 {
@@ -142,7 +146,7 @@ static VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
 ///////////////////////////////////////////////////////////////////////
 // Skew Knobs
 ALCHEMY_SRAM
-static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Depth Skew")
+static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
   .Ident("depth.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_density_skew));
@@ -178,21 +182,27 @@ static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
   .Ring(Custom(DrawSkewKnob, &vk_warp_skew));
 
 ALCHEMY_SRAM  
+static VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, "Melt Skew")
+  .Ident("melt.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_melt_skew));
+
+ALCHEMY_SRAM  
 static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_smear_skew));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_melt_skew = VirtualKnob(kPotBottomRight, "Melt Skew")
-  .Ident("melt.skew")
+static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Motion Skew")
+  .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_melt_skew));
+  .Ring(Custom(DrawSkewKnob, &vk_motion_skew));
 
 /////////////////////////////////////////////////////////////////////////
 // Param Knobs which get skewed
 ALCHEMY_SRAM
-static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Depth")
+static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
   .Ident("depth.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
@@ -240,6 +250,12 @@ static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
 
+ALCHEMY_SRAM  
+static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Motion")
+  .Ident("motion.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_motion_skew));
+
 // /* Bind knobs to page */
 ALCHEMY_SRAM  
 static Page vibe_page = Page(0).Name("Vibe")
@@ -249,7 +265,7 @@ static Page vibe_page = Page(0).Name("Vibe")
 ALCHEMY_SRAM  
 static Page rizz_page = Page(1).Name("Rizz")
   .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear);
+  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_motion);
 
 //////////////////////////////////////////////////////////////////////
 // button, button, whose got the button?
@@ -314,17 +330,28 @@ static void UpdateParams()
     float shfsk = GetSkewValue(vk_shift_skew);
     float warp  = vk_warp.Value();
     float warsk = GetSkewValue(vk_warp_skew);
+    
     float smear = vk_smear.Value();
     float smesk = GetSkewValue(vk_smear_skew);
+    float smrl  = vessl::math::constrain(vessl::math::lerp(smear_min, smear_max, smear - smesk), smear_min, smear_max);
+    float smrr  = vessl::math::constrain(vessl::math::lerp(smear_min, smear_max, smear + smesk), smear_min, smear_max);
+
     float melt  = vk_melt.Value();
     float melsk = GetSkewValue(vk_melt_skew);
+
+    float motn  = vk_motion.Value();
+    float motsk = GetSkewValue(vk_motion_skew);
+    float motl  = vessl::math::constrain(vessl::math::lerp(motio_min, motio_max, motn - motsk), motio_min, motio_max);
+    float motr  = vessl::math::constrain(vessl::math::lerp(motio_min, motio_max, motn + motsk), motio_min, motio_max);
+
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
     condolences::SetSensitivity(sensl, sensr);
     condolences::SetShift(shft - shfsk, shft + shfsk);
     condolences::SetSpacing(warp - warsk, warp + warsk);
-    condolences::SetSmear(smear - smesk, smear + smesk);
+    condolences::SetSmear(smrl, smrr);
     condolences::SetMelt(melt - melsk, melt + melsk);
+    condolences::SetMotion(motl, motr);
     condolences::SetMix(mixd, mixw);
   }
 }
