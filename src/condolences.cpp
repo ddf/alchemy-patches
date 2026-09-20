@@ -30,7 +30,6 @@ using namespace alchemy;
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
- *  @todo parameter for smear LFO speed and depth?
  */
 constexpr size_t page_count = 2;
 
@@ -59,6 +58,8 @@ constexpr float motio_min        = 0.05f;
 constexpr float motio_max        = 1.0f;
 constexpr float smear_min        = 1.0f;
 constexpr float smear_max        = 32.f;
+constexpr float rippl_min        = 0.f;
+constexpr float rippl_max        = 1.f;
 
 struct DensitySettings : Serializable
 {
@@ -194,6 +195,12 @@ static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ring(Custom(DrawSkewKnob, &vk_smear_skew));
 
 ALCHEMY_SRAM  
+static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Ripple Skew")
+  .Ident("ripple.skew")
+  .Linear(-0.5f, 0.5f)
+  .Ring(Custom(DrawSkewKnob, &vk_ripple_skew));
+
+ALCHEMY_SRAM  
 static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Motion Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
@@ -251,6 +258,13 @@ static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
 
 ALCHEMY_SRAM  
+static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Ripple")
+  .Ident("ripple.both")
+  .Linear(0.f, 1.f)
+  .Ring(Custom(DrawKnobWithSkew, &vk_ripple_skew));
+
+
+ALCHEMY_SRAM  
 static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Motion")
   .Ident("motion.both")
   .Linear(0.f, 1.f)
@@ -265,7 +279,7 @@ static Page vibe_page = Page(0).Name("Vibe")
 ALCHEMY_SRAM  
 static Page rizz_page = Page(1).Name("Rizz")
   .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_motion);
+  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
 
 //////////////////////////////////////////////////////////////////////
 // button, button, whose got the button?
@@ -326,8 +340,10 @@ static void UpdateParams()
     float sensk = GetSkewValue(vk_sensitivity_skew);
     float sensl = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens - sensk), sensi_min, sensi_max);
     float sensr = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens + sensk), sensi_min, sensi_max);
+
     float shft  = vk_shift.Value();
     float shfsk = GetSkewValue(vk_shift_skew);
+    
     float warp  = vk_warp.Value();
     float warsk = GetSkewValue(vk_warp_skew);
     
@@ -339,6 +355,11 @@ static void UpdateParams()
     float melt  = vk_melt.Value();
     float melsk = GetSkewValue(vk_melt_skew);
 
+    float ripl  = vk_ripple.Value();
+    float ripsk = GetSkewValue(vk_ripple_skew);
+    float ripll = vessl::math::constrain(vessl::math::lerp(rippl_min, rippl_max, ripl - ripsk), rippl_min, rippl_max);
+    float riplr = vessl::math::constrain(vessl::math::lerp(rippl_min, rippl_max, ripl + ripsk), rippl_min, rippl_max);
+
     float motn  = vk_motion.Value();
     float motsk = GetSkewValue(vk_motion_skew);
     float motl  = vessl::math::constrain(vessl::math::lerp(motio_min, motio_max, motn - motsk), motio_min, motio_max);
@@ -346,11 +367,13 @@ static void UpdateParams()
 
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
+
     condolences::SetSensitivity(sensl, sensr);
     condolences::SetShift(shft - shfsk, shft + shfsk);
     condolences::SetSpacing(warp - warsk, warp + warsk);
     condolences::SetSmear(smrl, smrr);
     condolences::SetMelt(melt - melsk, melt + melsk);
+    condolences::SetRipple(ripll, riplr);
     condolences::SetMotion(motl, motr);
     condolences::SetMix(mixd, mixw);
   }
