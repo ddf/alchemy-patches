@@ -152,7 +152,7 @@ static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
   .Ring(Custom(DrawSkewKnob, &vk_density_skew));
 
 ALCHEMY_SRAM
-static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Breadth Skew")
+static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
   .Ident("breadth.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(DrawSkewKnob, &vk_spread_skew));
@@ -208,7 +208,7 @@ static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
   .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
 
 ALCHEMY_SRAM
-static VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Breadth")
+static VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Focus")
   .Ident("breadth.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(DrawKnobWithSkew, &vk_spread_skew));
