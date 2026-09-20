@@ -189,8 +189,14 @@ void SetSpread(float x, float y)
 
 void SetSmear(float x, float y)
 {
-  condolences_[0]->smear() = vessl::math::clamp_delta(x);
-  condolences_[1]->smear() = vessl::math::clamp_delta(y);
+  condolences_[0]->smear() = x;
+  condolences_[1]->smear() = y;
+}
+
+void SetMotion(float x, float y)
+{
+  condolences_[0]->motion() = x;
+  condolences_[1]->motion() = y;
 }
 
 void SetMelt(float x, float y)
