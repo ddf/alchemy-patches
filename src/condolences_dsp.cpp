@@ -157,10 +157,10 @@ void SetDensity(float x, float y)
   condolences_[1]->density() = y;
 }
 
-void SetDecay(float x, float y)
+void SetDamping(float x, float y)
 {
-  condolences_[0]->decay() = x;
-  condolences_[1]->decay() = y;
+  condolences_[0]->damping() = x;
+  condolences_[1]->damping() = y;
 }
 
 void SetSensitivity(float x, float y)

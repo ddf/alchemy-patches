@@ -31,7 +31,7 @@ namespace condolences
 
     void SetDensity(float x, float y);
     void SetSpread(float x, float y);
-    void SetDecay(float x, float y);
+    void SetDamping(float x, float y);
     void SetSensitivity(float x, float y);
     void SetShift(float x, float y);
     void SetSpacing(float x, float y);

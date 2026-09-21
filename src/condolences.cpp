@@ -37,9 +37,9 @@ using namespace alchemy;
 constexpr float band_density_min = condolences::GetDensityMin();
 constexpr float band_density_max = condolences::GetDensityMax();
 constexpr float sensi_min        = 0.1f;
-constexpr float sensi_max        = 0.98f;
-constexpr float decay_min        = 0.5f;
-constexpr float decay_max        = 60.f;
+constexpr float sensi_max        = 0.9f;
+constexpr float dampi_min        = 0.8;
+constexpr float dampi_max        = 0.949;
 constexpr float motio_min        = 0.05f;
 constexpr float motio_max        = 1.0f;
 constexpr float smear_min        = 0.25f;
@@ -198,7 +198,7 @@ static VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, "Empathy")
 ALCHEMY_SRAM
 static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   .Ident("sympa.both")
-  .Exp(0.f, 1.f)
+  .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_decay_skew));
 
 ALCHEMY_SRAM  
@@ -331,15 +331,15 @@ static void UpdateParams()
     float stl = vessl::math::constrain(vk_spread.Value() - ssk, 0.f, 1.f);
     float str = vessl::math::constrain(vk_spread.Value() + ssk, 0.f, 1.f);
 
-    float decay_l   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, decl);
-    float decay_r   = vessl::math::interp<vessl::math::easing::expo::in>(decay_min, decay_max, decr);
+    float dampngl   = vessl::math::interp<vessl::math::easing::quad::out>(dampi_min, dampi_max, decl);
+    float dampngr   = vessl::math::interp<vessl::math::easing::quad::out>(dampi_min, dampi_max, decr);
     float density_l = vessl::math::lerp(dmin, dmax, dtl);
     float density_r = vessl::math::lerp(dmin, dmax, dtr);
     float spread_l  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, stl);
     float spread_r  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, str);
 
     condolences::SetDensity(density_l, density_r);
-    condolences::SetDecay(decay_l, decay_r);
+    condolences::SetDamping(dampngl, dampngr);
     condolences::SetSpread(spread_l, spread_r);
 
     float sens  = vk_sensitivity.Value();
