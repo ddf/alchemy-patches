@@ -55,12 +55,9 @@ struct Palette
 {
   Color active;
   Color passive;
+  Color background;
+  Color positive;
+  Color negative;
 };
-
-namespace palette
-{
-constexpr Palette Fuschia = { color::Fuschia, color::Indigo };
-constexpr Palette Lime = { color::Lime, color::DarkOliveGreen };
-}
 
 }

@@ -31,20 +31,6 @@ using namespace alchemy;
  * Maybe and/or later:
  *  @todo generated audio feedback path
  */
-constexpr size_t page_count = 2;
-
-/* Get our SDK surfaces and opt in to everything.
- * Not declared static so condolences_gui.h can reference hw and pager.
- */
-AlchemyLab                        hw;
-ControlLoop                       loop    (hw);
-Pager                             pager   (hw.buttons[kButtonB1], page_count, kNumPots);
-ParamLock<page_count * kNumPots>  locks   (hw.buttons[kButtonB1], pager);
-Presets                           presets (hw.seed.qspi);
-Settings                          settings(hw, &pager);
-Profiler                          profiler(hw);
-CvMatrix                          cv_matrix(kNumCvInputs);
-hostlink::Host                    host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Settings
@@ -112,37 +98,19 @@ struct DensitySettings : Serializable
   }
 };
 
-static DensitySettings density_settings;
-
-constexpr uint8_t mode_page = 0;
-constexpr uint8_t mode_pot  = kPotTopRight;
-constexpr uint8_t mode_count = static_cast<uint8_t>(condolences::Mode::Count);
-constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
-
-static void ConfigureSettings()
-{
-  settings.UseBrightness();
-  settings.UsePresets(presets);
-  settings.Page(mode_page)
-          .Name("Config")
-          .Pot(kPotTopRight)
-          .Selector(mode_labels)
-          .Ident("config.mode");
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // Knobs
 ALCHEMY_SRAM  
 static VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, "Dry")
   .Ident("mix.dry")
   .Linear(0.f, 1.f)
-  .Ring(vibe_spec);
+  .Ring(Level(vibe_palette.active.rgb));
 
 ALCHEMY_SRAM
 static VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
   .Ident("mix.wet")
   .Linear(0.f, 1.f)
-  .Ring(vibe_spec);
+  .Ring(Level(vibe_palette.active.rgb));
 
 ///////////////////////////////////////////////////////////////////////
 // Skew Knobs
@@ -150,61 +118,61 @@ ALCHEMY_SRAM
 static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
   .Ident("depth.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_density_skew));
+  .Ring(Custom(SkewKnob, &vibe_palette));
 
 ALCHEMY_SRAM
 static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
   .Ident("breadth.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_spread_skew));
+  .Ring(Custom(SkewKnob, &vibe_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, "Empathy Skew")
   .Ident("sensi.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_sensitivity_skew));
+  .Ring(Custom(SkewKnob, &vibe_palette));
 
 ALCHEMY_SRAM  
-static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleLeft, "Sympathy Skew")
+static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, "Sympathy Skew")
   .Ident("sympa.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_decay_skew));
+  .Ring(Custom(SkewKnob, &vibe_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
   .Ident("shift.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_shift_skew));
+  .Ring(Custom(SkewKnob, &rizz_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
   .Ident("warp.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_warp_skew));
+  .Ring(Custom(SkewKnob, &rizz_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, "Melt Skew")
   .Ident("melt.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_melt_skew));
+  .Ring(Custom(SkewKnob, &rizz_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_smear_skew));
+  .Ring(Custom(SkewKnob, &rizz_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
   .Ident("ripple.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_ripple_skew));
+  .Ring(Custom(SkewKnob, &rizz_palette));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
-  .Ring(Custom(DrawSkewKnob, &vk_motion_skew));
+  .Ring(Custom(SkewKnob, &rizz_palette));
 
 /////////////////////////////////////////////////////////////////////////
 // Param Knobs which get skewed
@@ -212,96 +180,134 @@ ALCHEMY_SRAM
 static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
   .Ident("depth.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_density_skew));
+  .Ring(Custom(KnobWithSkew, &vk_density_skew));
 
 ALCHEMY_SRAM
 static VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Focus")
   .Ident("breadth.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_spread_skew));
+  .Ring(Custom(KnobWithSkew, &vk_spread_skew));
 
 ALCHEMY_SRAM
 static VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, "Empathy")
   .Ident("sensi.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_sensitivity_skew));
+  .Ring(Custom(KnobWithSkew, &vk_sensitivity_skew));
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
 ALCHEMY_SRAM
 static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   .Ident("sympa.both")
   .Exp(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_decay_skew));
+  .Ring(Custom(KnobWithSkew, &vk_decay_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
   .Ident("shift.both")
   .Linear(-1.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_shift_skew));
+  .Ring(Custom(KnobWithSkew, &vk_shift_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
   .Ident("warp.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_warp_skew));
+  .Ring(Custom(KnobWithSkew, &vk_warp_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, "Melt")
   .Ident("melt.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_melt_skew));
+  .Ring(Custom(KnobWithSkew, &vk_melt_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ident("smear.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_smear_skew));
+  .Ring(Custom(KnobWithSkew, &vk_smear_skew));
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
   .Ident("ripple.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_ripple_skew));
+  .Ring(Custom(KnobWithSkew, &vk_ripple_skew));
 
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
   .Ident("motion.both")
   .Linear(0.f, 1.f)
-  .Ring(Custom(DrawKnobWithSkew, &vk_motion_skew));
-
-// /* Bind knobs to page */
-ALCHEMY_SRAM  
-static Page vibe_page = Page(0).Name("Vibes")
-  .Color(vessicle::palette::Fuschia.active.hex)
-  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
-
-ALCHEMY_SRAM  
-static Page rizz_page = Page(1).Name("Rizz")
-  .Color(vessicle::palette::Lime.active.hex)
-  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
+  .Ring(Custom(KnobWithSkew, &vk_motion_skew));
 
 //////////////////////////////////////////////////////////////////////
-// button, button, whose got the button?
-ALCHEMY_SRAM
-static VirtualButton vb_shift = VirtualButton(kButtonB2, "Shift")
-  .Ident("btn.shift");
+// Pages
+enum PageId : uint8_t
+{
+  kPageVibes, kPageVibeSkew, kPageRizz, kPageRizzSkew,
+  kPageCount
+};
 
 ALCHEMY_SRAM  
-static ButtonBank buttons;
+static Page vibe_page = Page(kPageVibes)
+  .Name("Vibes")
+  .Color(vibe_palette.active.hex)
+  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
 
-static void OnPoll(uint32_t t_ms)
+ALCHEMY_SRAM
+static Page vibe_skew_page = Page(kPageVibeSkew)
+  .Name("Vibe Skew")
+  .Color(vibe_palette.active.hex)
+  .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew);
+
+ALCHEMY_SRAM  
+static Page rizz_page = Page(kPageRizz)
+  .Name("Rizz")
+  .Color(rizz_palette.active.hex)
+  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
+
+ALCHEMY_SRAM  
+static Page rizz_skew_page = Page(kPageRizzSkew)
+  .Name("Rizz Skew")
+  .Color(rizz_palette.active.hex)
+  .Knobs(vk_shift_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew, vk_ripple_skew, vk_motion_skew);
+
+//////////////////////////////////////////////////////////////////////
+// Surfaces
+static constexpr uint8_t kLockCount = kPageCount*kNumPots;
+using LockSettings = LockLength<16, 10, LockStore::Preset>;
+
+/* These are not declared static so condolences_gui.h can reference hw and pager. */
+AlchemyLab                          hw;
+ControlLoop                         loop    (hw);
+Pager                               pager   (kPageCount, kNumPots);
+ParamLock<kLockCount, LockSettings> locks   (hw.buttons[kButtonB1], pager);
+Presets                             presets (hw.seed.qspi);
+Settings                            settings(hw, &pager);
+Profiler                            profiler(hw);
+CvMatrix                            cv_matrix(kNumCvInputs);
+hostlink::Host                      host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
+
+static DensitySettings density_settings;
+
+constexpr uint8_t mode_page = 0;
+constexpr uint8_t mode_pot  = kPotTopRight;
+constexpr uint8_t mode_count = static_cast<uint8_t>(condolences::Mode::Count);
+constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
+
+static void ConfigureInterface()
 {
-  // if (pager.Page() == 0 && IsShiftPressed())
-  // {
-  //   SetShiftEnabled(true);
-  //   pager.GoToPage(1, loop.Phys());
-  // }
-  // else if (pager.Page() == 1 && IsShiftEnabled() && !IsShiftPressed())
-  // {
-  //   SetShiftEnabled(false);
-  //   pager.GoToPage(0, loop.Phys());
-  // }
+  pager.Cycle(hw.buttons[kButtonB1], kPageVibes, kPageRizz)
+       .Shift(hw.buttons[kButtonB2], kPageVibeSkew)
+       .From(kPageVibes)
+       .Shift(hw.buttons[kButtonB3], kPageRizzSkew)
+       .From(kPageRizz);
+
+  settings.UseBrightness();
+  settings.UsePresets(presets);
+  settings.Page(mode_page)
+          .Name("Config")
+          .Pot(kPotTopRight)
+          .Selector(mode_labels)
+          .Ident("config.mode");
 }
 
 /* summed CV+knob values → DSP each frame */
@@ -401,10 +407,8 @@ int main()
     // cv_matrix.Jack(4).To(l_lo_level);
     // cv_matrix.Jack(5).To(l_lo_freq);
 
-    buttons.Global(vb_shift);
-
     /* Opting into default settings gestures and controls.*/
-    ConfigureSettings();
+    ConfigureInterface();
 
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);
@@ -418,14 +422,14 @@ int main()
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
      * If desired, you can unroll and modify. */
     loop.Use(pager)
-        .Use(buttons)
         .Use(locks)
         .Use(settings)
         //.Use(cv_matrix)
         .Use(vibe_page)
+        .Use(vibe_skew_page)
         .Use(rizz_page)
+        .Use(rizz_skew_page)
         .Use(host)
-        .OnPoll(OnPoll)
         .OnFrame(UpdateParams);
 
     presets.Init();
