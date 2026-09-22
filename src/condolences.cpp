@@ -40,10 +40,10 @@ constexpr float sensi_min        = 0.1f;
 constexpr float sensi_max        = 0.9f;
 constexpr float dampi_min        = 0.8;
 constexpr float dampi_max        = 0.949;
-constexpr float motio_min        = 0.05f;
+constexpr float motio_min        = 0.1f;
 constexpr float motio_max        = 1.0f;
-constexpr float smear_min        = 0.25f;
-constexpr float smear_max        = 4.0f;
+constexpr float smear_min        = 1.0f;
+constexpr float smear_max        = 8.0f;
 constexpr float rippl_min        = 0.f;
 constexpr float rippl_max        = 1.f;
 
