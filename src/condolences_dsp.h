@@ -19,7 +19,7 @@ namespace condolences
         Count
     };
 
-    constexpr size_t GetBlockSize() { return 256; }
+    constexpr size_t GetBlockSize() { return Condolences<float, SpectrumSize, Overlap>::BlockSize;  }
     constexpr float GetDensityMin() { return Condolences<float, SpectrumSize, Overlap>::DensityMin; }
     constexpr float GetDensityMax() { return Condolences<float, SpectrumSize, Overlap>::DensityMax; }
 
