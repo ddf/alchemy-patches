@@ -5,6 +5,8 @@
 
 namespace condolences
 {
+namespace config
+{
 using namespace alchemy;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -189,4 +191,6 @@ struct RizzSettings : alchemy::Serializable
     return ok;
   }
 };
+
+} // namespace settings
 } // namespace condolences

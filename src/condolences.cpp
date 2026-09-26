@@ -14,12 +14,13 @@
 
 #include "attributes.h"
 #include "profiler.h"
-#include "condolences_settings.h"
+#include "condolences_cfg.h"
 #include "condolences_gui.h"
 #include "condolences_dsp.h"
 #include "vessl/vessl.h"
 #include <stdio.h>
 
+using namespace vessl;
 using namespace alchemy;
 using namespace condolences;
 
@@ -221,8 +222,8 @@ Profiler                            profiler(hw);
 CvMatrix                            cv_matrix(kNumCvInputs);
 hostlink::Host                      host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
 
-static VibeSettings vibe_settings;
-static RizzSettings rizz_settings;
+static config::VibeSettings vibe_settings;
+static config::RizzSettings rizz_settings;
 
 constexpr uint8_t mode_page = 0;
 constexpr uint8_t mode_pot  = kPotTopRight;
@@ -254,35 +255,35 @@ static void ConfigureInterface()
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  const float dmin = vessl::math::lerp(band_density_min, band_density_max, vibe_settings.band_min);
-  const float dmax = vessl::math::lerp(band_density_min, band_density_max, vibe_settings.band_max);
+  const float dmin = math::lerp(config::band_density_min, config::band_density_max, vibe_settings.band_min);
+  const float dmax = math::lerp(config::band_density_min, config::band_density_max, vibe_settings.band_max);
   {
     // decay
     float decsk = GetSkewValue(vk_decay_skew);
-    float decl  = vessl::math::constrain(vk_decay.Value() - decsk, 0.f, 1.f);
-    float decr  = vessl::math::constrain(vk_decay.Value() + decsk, 0.f, 1.f);
+    float decl  = math::constrain(vk_decay.Value() - decsk, 0.f, 1.f);
+    float decr  = math::constrain(vk_decay.Value() + decsk, 0.f, 1.f);
 
     // density
     float dsk = GetSkewValue(vk_density_skew);
-    float dtl = vessl::math::constrain(vk_density.Value() - dsk, 0.f, 1.f);
-    float dtr = vessl::math::constrain(vk_density.Value() + dsk, 0.f, 1.f);
+    float dtl = math::constrain(vk_density.Value() - dsk, 0.f, 1.f);
+    float dtr = math::constrain(vk_density.Value() + dsk, 0.f, 1.f);
 
     // spread
     float ssk = GetSkewValue(vk_spread_skew);
-    float stl = vessl::math::constrain(vk_spread.Value() - ssk, 0.f, 1.f);
-    float str = vessl::math::constrain(vk_spread.Value() + ssk, 0.f, 1.f);
+    float stl = math::constrain(vk_spread.Value() - ssk, 0.f, 1.f);
+    float str = math::constrain(vk_spread.Value() + ssk, 0.f, 1.f);
 
-    float dampngl   = vessl::math::interp<vessl::math::easing::quad::out>(dampi_min, dampi_max, decl);
-    float dampngr   = vessl::math::interp<vessl::math::easing::quad::out>(dampi_min, dampi_max, decr);
-    float density_l = vessl::math::lerp(dmin, dmax, dtl);
-    float density_r = vessl::math::lerp(dmin, dmax, dtr);
-    float spread_l  = vessl::math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, stl);
-    float spread_r  = vessl::math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, str);
+    float dampngl   = math::interp<math::easing::quad::out>(config::dampi_min, config::dampi_max, decl);
+    float dampngr   = math::interp<math::easing::quad::out>(config::dampi_min, config::dampi_max, decr);
+    float density_l = math::lerp(dmin, dmax, dtl);
+    float density_r = math::lerp(dmin, dmax, dtr);
+    float spread_l  = math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, stl);
+    float spread_r  = math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, str);
 
     float sens  = vk_sensitivity.Value();
     float sensk = GetSkewValue(vk_sensitivity_skew);
-    float sensl = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens - sensk), sensi_min, sensi_max);
-    float sensr = vessl::math::constrain(vessl::math::lerp(sensi_min, sensi_max, sens + sensk), sensi_min, sensi_max);
+    float sensl = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens - sensk), config::sensi_min, config::sensi_max);
+    float sensr = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens + sensk), config::sensi_min, config::sensi_max);
 
     float shft  = vk_shift.Value();
     float shfsk = GetSkewValue(vk_shift_skew);
@@ -292,8 +293,8 @@ static void UpdateParams()
     
     float smear = vk_smear.Value();
     float smesk = GetSkewValue(vk_smear_skew);
-    float smrl  = vessl::math::constrain(vessl::math::lerp(smear_min, smear_max, smear - smesk), smear_min, smear_max);
-    float smrr  = vessl::math::constrain(vessl::math::lerp(smear_min, smear_max, smear + smesk), smear_min, smear_max);
+    float smrl  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear - smesk), config::smear_min, config::smear_max);
+    float smrr  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear + smesk), config::smear_min, config::smear_max);
 
     float melt  = vk_melt.Value();
     float melsk = GetSkewValue(vk_melt_skew);
@@ -302,17 +303,17 @@ static void UpdateParams()
     float ripsk = GetSkewValue(vk_ripple_skew);
     float ripdmpl = 1.0f - rizz_settings.rippl_damp_reduct*decl;
     float ripdmpr = 1.0f - rizz_settings.rippl_damp_reduct*decr;
-    float ripbstl = rizz_settings.rippl_smear_boost*vessl::math::constrain(smear - smesk, ripple::smear_boost_min, ripple::smear_boost_max);
-    float ripbstr = rizz_settings.rippl_smear_boost*vessl::math::constrain(smear + smesk, ripple::smear_boost_min, ripple::smear_boost_max);
-    float ripll = vessl::math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstl)*ripdmpl, ripl - ripsk), ripple::amount_min, ripple::amount_max);
-    float riplr = vessl::math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstr)*ripdmpr, ripl + ripsk), ripple::amount_min, ripple::amount_max);
-    float ripdl = vessl::math::constrain(rizz_settings.rippl_depth + ripbstl*0.25f, ripple::depth_min, ripple::depth_max);
-    float ripdr = vessl::math::constrain(rizz_settings.rippl_depth + ripbstr*0.25f, ripple::depth_min, ripple::depth_max);
+    float ripbstl = rizz_settings.rippl_smear_boost*math::constrain(smear - smesk, config::ripple::smear_boost_min, config::ripple::smear_boost_max);
+    float ripbstr = rizz_settings.rippl_smear_boost*math::constrain(smear + smesk, config::ripple::smear_boost_min, config::ripple::smear_boost_max);
+    float ripll = math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstl)*ripdmpl, ripl - ripsk), config::ripple::amount_min, config::ripple::amount_max);
+    float riplr = math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstr)*ripdmpr, ripl + ripsk), config::ripple::amount_min, config::ripple::amount_max);
+    float ripdl = math::constrain(rizz_settings.rippl_depth + ripbstl*0.25f, config::ripple::depth_min, config::ripple::depth_max);
+    float ripdr = math::constrain(rizz_settings.rippl_depth + ripbstr*0.25f, config::ripple::depth_min, config::ripple::depth_max);
 
     float motn  = vk_motion.Value();
     float motsk = GetSkewValue(vk_motion_skew);
-    float motl  = vessl::math::constrain(vessl::math::lerp(motio_min, motio_max, motn - motsk), motio_min, motio_max);
-    float motr  = vessl::math::constrain(vessl::math::lerp(motio_min, motio_max, motn + motsk), motio_min, motio_max);
+    float motl  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn - motsk), config::motio_min, config::motio_max);
+    float motr  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn + motsk), config::motio_min, config::motio_max);
 
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
@@ -335,7 +336,7 @@ int main()
 {
     // set block size exactly equal to the overlap for synthesis.
     // this should mean we do exactly the same amount of work (generally speaking), every block.
-    size_t block_size = dsp::GetBlockSize();
+    vessl::size_t block_size = dsp::GetBlockSize();
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_32KHZ, block_size);
     dsp::Init(hw.SampleRate());
 
