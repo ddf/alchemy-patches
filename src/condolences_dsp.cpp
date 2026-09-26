@@ -205,10 +205,12 @@ void SetMelt(float x, float y)
   condolences_[1]->melt() = vessl::math::clamp_delta(y)*0.98f;
 }
 
-void SetRipple(float x, float y)
+void SetRipple(float x, float y, float xd, float yd)
 {
-  condolences_[0]->ripple() = x;
-  condolences_[1]->ripple() = y;
+  condolences_[0]->ripple_amount() = x;
+  condolences_[0]->ripple_depth() = xd;
+  condolences_[1]->ripple_amount() = y;
+  condolences_[1]->ripple_depth() = yd;
 }
 
 void SetMix(float x, float y)
