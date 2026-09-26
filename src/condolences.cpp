@@ -222,14 +222,6 @@ Profiler                            profiler(hw);
 CvMatrix                            cv_matrix(kNumCvInputs);
 hostlink::Host                      host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
 
-static config::VibeSettings vibe_settings;
-static config::RizzSettings rizz_settings;
-
-constexpr uint8_t mode_page = 0;
-constexpr uint8_t mode_pot  = kPotTopRight;
-constexpr uint8_t mode_count = static_cast<uint8_t>(dsp::Mode::Count);
-constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
-
 static void ConfigureInterface()
 {
   pager.Cycle(hw.buttons[kButtonB1], kPageVibe, kPageRizz)
@@ -238,25 +230,14 @@ static void ConfigureInterface()
        .Shift(hw.buttons[kButtonB3], kPageRizzSkew)
        .From(kPageRizz);
 
-  settings.Page(mode_page)
-          .Name("Config")
-          .Pot(kPotTopRight)
-          .Selector(mode_labels)
-          .Ident("config.mode");
-
-  // add pages for vibe and rizz settings to add knobs to.
-  settings.Page(1);
-  settings.Page(2);
-
-  settings.UseBrightness();
-  settings.UsePresets(presets);
+  config::Configure(settings, presets);
 }
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  const float dmin = math::lerp(config::band_density_min, config::band_density_max, vibe_settings.band_min);
-  const float dmax = math::lerp(config::band_density_min, config::band_density_max, vibe_settings.band_max);
+  const float dmin = math::lerp(config::band_density_min, config::band_density_max, config::settings::perception_min.Value());
+  const float dmax = math::lerp(config::band_density_min, config::band_density_max, config::settings::perception_max.Value());
   {
     // decay
     float decsk = GetSkewValue(vk_decay_skew);
@@ -277,13 +258,18 @@ static void UpdateParams()
     float dampngr   = math::interp<math::easing::quad::out>(config::dampi_min, config::dampi_max, decr);
     float density_l = math::lerp(dmin, dmax, dtl);
     float density_r = math::lerp(dmin, dmax, dtr);
-    float spread_l  = math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, stl);
-    float spread_r  = math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, str);
+    float spread_l  = math::lerp(config::settings::focus_min.Value(), config::settings::focus_max.Value(), stl);
+    float spread_r  = math::lerp(config::settings::focus_min.Value(), config::settings::focus_max.Value(), str);
 
     float sens  = vk_sensitivity.Value();
     float sensk = GetSkewValue(vk_sensitivity_skew);
-    float sensl = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens - sensk), config::sensi_min, config::sensi_max);
-    float sensr = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens + sensk), config::sensi_min, config::sensi_max);
+    float sensl = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens - sensk), 
+                                  config::sensi_min, 
+                                  config::sensi_max);
+
+    float sensr = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens + sensk), 
+                                  config::sensi_min, 
+                                  config::sensi_max);
 
     float shft  = vk_shift.Value();
     float shfsk = GetSkewValue(vk_shift_skew);
@@ -293,27 +279,57 @@ static void UpdateParams()
     
     float smear = vk_smear.Value();
     float smesk = GetSkewValue(vk_smear_skew);
-    float smrl  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear - smesk), config::smear_min, config::smear_max);
-    float smrr  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear + smesk), config::smear_min, config::smear_max);
+
+    float smrl  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear - smesk), 
+                                  config::smear_min, 
+                                  config::smear_max);
+
+    float smrr  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear + smesk), 
+                                  config::smear_min, 
+                                  config::smear_max);
 
     float melt  = vk_melt.Value();
     float melsk = GetSkewValue(vk_melt_skew);
 
     float ripl  = vk_ripple.Value();
     float ripsk = GetSkewValue(vk_ripple_skew);
-    float ripdmpl = 1.0f - rizz_settings.rippl_damp_reduct*decl;
-    float ripdmpr = 1.0f - rizz_settings.rippl_damp_reduct*decr;
-    float ripbstl = rizz_settings.rippl_smear_boost*math::constrain(smear - smesk, config::ripple::smear_boost_min, config::ripple::smear_boost_max);
-    float ripbstr = rizz_settings.rippl_smear_boost*math::constrain(smear + smesk, config::ripple::smear_boost_min, config::ripple::smear_boost_max);
-    float ripll = math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstl)*ripdmpl, ripl - ripsk), config::ripple::amount_min, config::ripple::amount_max);
-    float riplr = math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstr)*ripdmpr, ripl + ripsk), config::ripple::amount_min, config::ripple::amount_max);
-    float ripdl = math::constrain(rizz_settings.rippl_depth + ripbstl*0.25f, config::ripple::depth_min, config::ripple::depth_max);
-    float ripdr = math::constrain(rizz_settings.rippl_depth + ripbstr*0.25f, config::ripple::depth_min, config::ripple::depth_max);
+    float ripdmpl = 1.0f - config::settings::ripple_damp_reduct.Value()*decl;
+    float ripdmpr = 1.0f - config::settings::ripple_damp_reduct.Value()*decr;
+
+    float ripbstl = config::settings::ripple_smear_boost.Value()*math::constrain(smear - smesk, 
+                                                                                 config::ripple::smear_boost_min, 
+                                                                                 config::ripple::smear_boost_max);
+
+    float ripbstr = config::settings::ripple_smear_boost.Value()*math::constrain(smear + smesk, 
+                                                                                 config::ripple::smear_boost_min, 
+                                                                                 config::ripple::smear_boost_max);
+
+    float ripll = math::constrain(vessl::math::lerp(0.f, (config::settings::ripple_amount_max.Value()+ripbstl)*ripdmpl, ripl - ripsk), 
+                                  config::ripple::amount_min, 
+                                  config::ripple::amount_max);
+
+    float riplr = math::constrain(vessl::math::lerp(0.f, (config::settings::ripple_amount_max.Value()+ripbstr)*ripdmpr, ripl + ripsk), 
+                                  config::ripple::amount_min, 
+                                  config::ripple::amount_max);
+
+    float ripdl = math::constrain(config::settings::ripple_lfo_depth.Value() + ripbstl*0.25f, 
+                                  config::ripple::depth_min, 
+                                  config::ripple::depth_max);
+
+    float ripdr = math::constrain(config::settings::ripple_lfo_depth.Value() + ripbstr*0.25f, 
+                                  config::ripple::depth_min, 
+                                  config::ripple::depth_max);
 
     float motn  = vk_motion.Value();
     float motsk = GetSkewValue(vk_motion_skew);
-    float motl  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn - motsk), config::motio_min, config::motio_max);
-    float motr  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn + motsk), config::motio_min, config::motio_max);
+    
+    float motl  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn - motsk), 
+                                  config::motio_min, 
+                                  config::motio_max);
+
+    float motr  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn + motsk), 
+                                  config::motio_min, 
+                                  config::motio_max);
 
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
@@ -360,8 +376,6 @@ int main()
     presets.Manage(pager);
     presets.Manage(locks);
     presets.Manage(settings);
-    presets.Manage(vibe_settings);
-    presets.Manage(rizz_settings);
     presets.Manage(profiler);
     //presets.Manage(buttons);
     presets.UseNames();

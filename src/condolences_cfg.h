@@ -1,7 +1,10 @@
 #pragma once
 
 #include "condolences_dsp.h"
+#include "condolences_gui.h"
 #include "alchemy/surface/serializable.h"
+#include "alchemy/surface/settings.h"
+#include "alchemy/surface/presets.h"
 
 namespace condolences
 {
@@ -9,8 +12,20 @@ namespace config
 {
 using namespace alchemy;
 
-////////////////////////////////////////////////////////////////////////////////
-// Settings
+// User adjustable via knobs on Settings pages.
+namespace settings
+{
+  KnobHandle perception_min;
+  KnobHandle perception_max;
+  KnobHandle focus_min;
+  KnobHandle focus_max;
+  KnobHandle ripple_amount_max;
+  KnobHandle ripple_lfo_depth;
+  KnobHandle ripple_damp_reduct;
+  KnobHandle ripple_smear_boost;
+}
+
+
 constexpr float band_density_min = dsp::GetDensityMin();
 constexpr float band_density_max = dsp::GetDensityMax();
 constexpr float sensi_min        = 0.1f;
@@ -21,6 +36,18 @@ constexpr float motio_min        = 0.1f;
 constexpr float motio_max        = 1.0f;
 constexpr float smear_min        = 1.0f;
 constexpr float smear_max        = 8.0f;
+
+namespace perception
+{
+  static constexpr float min_default = (192.f - band_density_min) / (band_density_max - band_density_min);
+  static constexpr float max_default = (band_density_max - band_density_min) / (band_density_max - band_density_min);
+}
+
+namespace focus
+{
+  static constexpr float min_dafault = 0.0f;
+  static constexpr float max_default = 1.0f; 
+}
 
 // absolute min/max values that ripple params are allowed to have
 namespace ripple
@@ -33,164 +60,100 @@ constexpr float damp_reduct_min = 0.0f;
 constexpr float damp_reduct_max = 1.0f;
 constexpr float smear_boost_min = 0.f;
 constexpr float smear_boost_max = 1.0f;
+
+constexpr float amount_max_default = 0.7f;
+constexpr float depth_default = 0.15f;
+constexpr float damp_reduct_default = 0.6f;
+constexpr float smear_boost_default = 0.20f;
 }
 
-struct VibeSettings : alchemy::Serializable
+constexpr uint8_t mode_page = 0;
+constexpr uint8_t mode_pot  = kPotTopRight;
+constexpr uint8_t mode_count = static_cast<uint8_t>(dsp::Mode::Count);
+constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
+
+constexpr uint8_t vibe_page = 1;
+constexpr uint8_t rizz_page = 2;
+
+void Configure(Settings& settings, Presets& presets)
 {
-  static constexpr int16_t page = 1;
+  settings.Page(mode_page)
+          .Name("Config")
+          .Pot(kPotTopRight)
+          .Selector(mode_labels)
+          .Ident("config.mode");
 
-  static constexpr float band_min_default = (192.f - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float band_max_default = (band_density_max - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float spread_min_dafault = 0.0f;
-  static constexpr float spread_max_default = 1.0f;
+  settings.Page(vibe_page).Name("Vibe Settings");
 
-  /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
-  float band_min = band_min_default;
-  float band_max = band_max_default;
-  float spread_min = spread_min_dafault;
-  float spread_max = spread_max_default;
+  settings::perception_min = settings.Page(vibe_page)
+          .Pot(kPotTopLeft)
+          .Knob()
+          .Name("Perception Min")
+          .Ident("percept.min")
+          .Default(perception::min_default)
+          .Color(vibe_palette.active.rgb);
 
-  size_t SerializedSize() const override { return 4u * sizeof(float); }
+  settings::perception_max = settings.Page(vibe_page)
+          .Pot(kPotTopRight)
+          .Knob()
+          .Name("Perception Max")
+          .Ident("percept.max")
+          .Default(perception::max_default)
+          .Color(vibe_palette.active.rgb);
 
-  void Serialize(uint8_t* out) const override
-  {
-    std::memcpy(out + 0, &band_min, 4);
-    std::memcpy(out + 4, &band_max, 4);
-    std::memcpy(out + 8, &spread_min, 4);
-    std::memcpy(out + 12, &spread_max, 4);
-  }
+  settings::focus_min = settings.Page(vibe_page)
+          .Pot(kPotMiddleLeft)
+          .Knob()
+          .Name("Focus Min")
+          .Ident("focus.min")
+          .Default(focus::min_dafault)
+          .Color(vibe_palette.active.rgb);
 
-  bool Deserialize(const uint8_t* in) override
-  {
-    std::memcpy(&band_min, in + 0, 4);
-    std::memcpy(&band_max, in + 4, 4);
-    std::memcpy(&spread_min, in + 8, 4);
-    std::memcpy(&spread_max, in + 12, 4);
-    return true;
-  }
+  settings::focus_max = settings.Page(vibe_page)
+          .Pot(kPotMiddleRight)
+          .Knob()
+          .Name("Focus Max")
+          .Ident("focus.max")
+          .Default(focus::max_default)
+          .Color(vibe_palette.active.rgb);
 
-  uint32_t SchemaHash() const override { return ('V'<<24) | ('I'<<16) | ('B'<<8) | ('A'); }
+  settings.Page(rizz_page).Name("Rizz Settings");
 
-  bool Describe(hostlink::ComponentWriter& w) const override
-  {
-    w.Label("Vibe Settings");
-    
-    char band_disp_json[64];
-    sprintf(band_disp_json, "{\"kind\":\"linear\",\"lo\":%d,\"hi\":%d}", 
-      static_cast<int>(band_density_min), static_cast<int>(band_density_max));
+  settings::ripple_amount_max = settings.Page(rizz_page)
+          .Pot(kPotTopLeft)
+          .Knob()
+          .Name("Sizzle Amount Max")
+          .Ident("sizzle.max")
+          .Default(ripple::amount_max_default)
+          .Color(rizz_palette.active.rgb);
 
-    bool ok = w.Field("density.min", "Perception Bands Min", 0, hostlink::FieldType::F32, 
-        band_min_default, 
-        band_disp_json,
-        0, // zones 
-        page, 
-        kPotTopLeft);
+  settings::ripple_lfo_depth = settings.Page(rizz_page)
+        .Pot(kPotTopRight)
+        .Knob()
+        .Name("Sizzle LFO Depth")
+        .Ident("sizzle.depth")
+        .Default(ripple::depth_default)
+        .Color(rizz_palette.active.rgb);
 
-    ok &= w.Field("density.max", "Perception Bands Max", 4, hostlink::FieldType::F32, 
-        band_max_default, 
-        band_disp_json,
-        0, // zones
-        page,
-        kPotTopRight
-    );
+  settings::ripple_damp_reduct = settings.Page(rizz_page)
+          .Pot(kPotMiddleLeft)
+          .Knob()
+          .Name("Sympathy Ripple Reduction")
+          .Ident("sizzle.damp.reduct")
+          .Default(ripple::damp_reduct_default)
+          .Color(rizz_palette.active.rgb);
 
-    ok &= w.Field("spread.min", "Focus Min", 8, hostlink::FieldType::F32, 
-        spread_min_dafault,
-        nullptr,
-        0, // zones
-        page,
-        kPotMiddleLeft
-    );
+  settings::ripple_smear_boost = settings.Page(rizz_page)
+          .Pot(kPotMiddleRight)
+          .Knob()
+          .Name("Smear Ripple Boost")
+          .Ident("sizzle.smear.boost")
+          .Default(ripple::smear_boost_default)
+          .Color(rizz_palette.active.rgb);
 
-    ok &= w.Field("spread.max", "Focus Max", 12, hostlink::FieldType::F32,
-        spread_max_default,
-        nullptr,
-        0, // zones
-        page,
-        kPotMiddleRight
-    );
+  settings.UseBrightness();
+  settings.UsePresets(presets);
+}
 
-    return ok;
-  }
-};
-
-struct RizzSettings : alchemy::Serializable
-{
-  static constexpr int16_t page = 2;
-
-  // range for the ripple (sizzle) knob
-  float rippl_amount_max = 0.7f;
-  // settings for fixed values
-  float rippl_depth = 0.15f;
-  float rippl_damp_reduct = 0.6f;
-  float rippl_smear_boost = 0.20f;
-
-  size_t SerializedSize() const override { return 4u * sizeof(float); }
-
-  void Serialize(uint8_t* out) const override
-  {
-    std::memcpy(out + 0, &rippl_amount_max, 4);
-    std::memcpy(out + 4, &rippl_depth, 4);
-    std::memcpy(out + 8, &rippl_damp_reduct, 4);
-    std::memcpy(out + 12, &rippl_smear_boost, 4);
-  }
-
-  bool Deserialize(const uint8_t* in) override
-  {
-    std::memcpy(&rippl_amount_max, in + 0, 4);
-    std::memcpy(&rippl_depth, in + 4, 4);
-    std::memcpy(&rippl_damp_reduct, in + 8, 4);
-    std::memcpy(&rippl_smear_boost, in + 12, 4);
-    return true;
-  }
-
-  uint32_t SchemaHash() const override { return ('R'<<24) | ('I'<<16) | ('Z'<<8) | ('A'); }
-
-  bool Describe(hostlink::ComponentWriter& w) const override
-  {
-    w.Label("Rizz Settings");
-    
-    // char disp_json[128];
-
-    // sprintf(disp_json, "{\"kind\":\"linear\",\"lo\":%.2f,\"hi\":%.2f}", ripple::amount_min, ripple::amount_max);
-    bool ok = w.Field("ripple.amt", "Sizzle Amount Max", 0, hostlink::FieldType::F32, 
-        rippl_amount_max,
-        nullptr,
-        0, // zones
-        page,
-        kPotTopLeft
-    );
-
-    // sprintf(disp_json, "{\"kind\":\"linear\",\"lo\":%.2f,\"hi\":%.2f}", ripple::depth_min, ripple::depth_max);
-    ok &= w.Field("ripple.depth", "Sizzle LFO Depth", 4, hostlink::FieldType::F32, 
-        rippl_depth,
-        nullptr,
-        0, // zones
-        page,
-        kPotTopRight
-    );
-
-    // sprintf(disp_json, "{\"kind\":\"linear\",\"lo\":%.2f,\"hi\":%.2f}", ripple::damp_reduct_min, ripple::damp_reduct_max);
-    ok &= w.Field("ripple.damp", "Sympathy: Sizzle Reduction", 8, hostlink::FieldType::F32, 
-        rippl_damp_reduct,
-        nullptr,
-        0, // zones
-        page,
-        kPotMiddleLeft
-    );
-
-    // sprintf(disp_json, "{\"kind\":\"linear\",\"lo\":%.2f,\"hi\":%.2f}", ripple::smear_boost_min, ripple::smear_boost_max);
-    ok &= w.Field("ripple.boost", "Smear: Sizzle Boost", 12, hostlink::FieldType::F32, 
-        rippl_smear_boost,
-        nullptr,
-        0, // zones
-        page,
-        kPotMiddleRight
-    );
-
-    return ok;
-  }
-};
-
-} // namespace settings
+} // namespace config
 } // namespace condolences
