@@ -15,8 +15,8 @@
 #include "attributes.h"
 #include "profiler.h"
 #include "condolences_settings.h"
-#include "condolences_dsp.h"
 #include "condolences_gui.h"
+#include "condolences_dsp.h"
 #include "vessl/vessl.h"
 #include <stdio.h>
 
@@ -167,7 +167,6 @@ static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_ripple_skew));
   
-
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
   .Ident("motion.both")
@@ -227,7 +226,7 @@ static RizzSettings rizz_settings;
 
 constexpr uint8_t mode_page = 0;
 constexpr uint8_t mode_pot  = kPotTopRight;
-constexpr uint8_t mode_count = static_cast<uint8_t>(condolences::Mode::Count);
+constexpr uint8_t mode_count = static_cast<uint8_t>(dsp::Mode::Count);
 constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
 
 static void ConfigureInterface()
@@ -318,17 +317,17 @@ static void UpdateParams()
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
     
-    condolences::SetDensity(density_l, density_r);
-    condolences::SetDamping(dampngl, dampngr);
-    condolences::SetSpread(spread_l, spread_r);
-    condolences::SetSensitivity(sensl, sensr);
-    condolences::SetShift(shft - shfsk, shft + shfsk);
-    condolences::SetSpacing(warp - warsk, warp + warsk);
-    condolences::SetSmear(smrl, smrr);
-    condolences::SetMelt(melt - melsk, melt + melsk);
-    condolences::SetRipple(ripll, riplr, ripdl, ripdr);
-    condolences::SetMotion(motl, motr);
-    condolences::SetMix(mixd, mixw);
+    dsp::SetDensity(density_l, density_r);
+    dsp::SetDamping(dampngl, dampngr);
+    dsp::SetSpread(spread_l, spread_r);
+    dsp::SetSensitivity(sensl, sensr);
+    dsp::SetShift(shft - shfsk, shft + shfsk);
+    dsp::SetSpacing(warp - warsk, warp + warsk);
+    dsp::SetSmear(smrl, smrr);
+    dsp::SetMelt(melt - melsk, melt + melsk);
+    dsp::SetRipple(ripll, riplr, ripdl, ripdr);
+    dsp::SetMotion(motl, motr);
+    dsp::SetMix(mixd, mixw);
   }
 }
 
@@ -336,9 +335,9 @@ int main()
 {
     // set block size exactly equal to the overlap for synthesis.
     // this should mean we do exactly the same amount of work (generally speaking), every block.
-    size_t block_size = condolences::GetBlockSize();
+    size_t block_size = dsp::GetBlockSize();
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_32KHZ, block_size);
-    condolences::Init(hw.SampleRate());
+    dsp::Init(hw.SampleRate());
 
     /* Drive every switchable jack as a CV output (J3..J8). */
     // for (uint8_t j = 0; j < kNumCvInputs; ++j)
@@ -383,7 +382,7 @@ int main()
     presets.BootLoad();
 
     UpdateParams();
-    profiler.StartAudio(condolences::Process);
+    profiler.StartAudio(dsp::Process);
 
     for (;;) loop.Tick();
 }

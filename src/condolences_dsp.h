@@ -9,6 +9,8 @@
 
 namespace condolences
 {
+namespace dsp
+{
     static constexpr size_t SpectrumSize = 4096;
     static constexpr size_t Overlap = 4;
 
@@ -54,4 +56,5 @@ namespace condolences
     void Process(daisy::AudioHandle::InputBuffer in,
                  daisy::AudioHandle::OutputBuffer out,
                  size_t block_size);
-} // namespace condolences_dsp
+} // namespace dsp
+} // namespace condolences

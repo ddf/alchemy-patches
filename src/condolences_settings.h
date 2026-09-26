@@ -9,8 +9,8 @@ using namespace alchemy;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Settings
-constexpr float band_density_min = GetDensityMin();
-constexpr float band_density_max = GetDensityMax();
+constexpr float band_density_min = dsp::GetDensityMin();
+constexpr float band_density_max = dsp::GetDensityMax();
 constexpr float sensi_min        = 0.1f;
 constexpr float sensi_max        = 0.9f;
 constexpr float dampi_min        = 0.8;
