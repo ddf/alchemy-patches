@@ -14,12 +14,14 @@
 
 #include "attributes.h"
 #include "profiler.h"
+#include "condolences_settings.h"
 #include "condolences_dsp.h"
 #include "condolences_gui.h"
 #include "vessl/vessl.h"
 #include <stdio.h>
 
 using namespace alchemy;
+using namespace condolences;
 
 /**
  * Definitely:
@@ -31,72 +33,6 @@ using namespace alchemy;
  * Maybe and/or later:
  *  @todo generated audio feedback path
  */
-
-////////////////////////////////////////////////////////////////////////////////
-// Settings
-constexpr float band_density_min = condolences::GetDensityMin();
-constexpr float band_density_max = condolences::GetDensityMax();
-constexpr float sensi_min        = 0.1f;
-constexpr float sensi_max        = 0.9f;
-constexpr float dampi_min        = 0.8;
-constexpr float dampi_max        = 0.999;
-constexpr float motio_min        = 0.1f;
-constexpr float motio_max        = 1.0f;
-constexpr float smear_min        = 1.0f;
-constexpr float smear_max        = 8.0f;
-constexpr float rippl_min        = 0.f;
-constexpr float rippl_max        = 1.f;
-
-struct DensitySettings : Serializable
-{
-  static constexpr float band_min_default = (192.f - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float band_max_default = (band_density_max - band_density_min) / (band_density_max - band_density_min);
-  static constexpr float spread_min_dafault = 0.0f;
-  static constexpr float spread_max_default = 1.0f;
-
-  /* Normalized 0..1; the disp hint maps the readout to 0..2× gain. */
-  float band_min = band_min_default;
-  float band_max = band_max_default;
-  float spread_min = spread_min_dafault;
-  float spread_max = spread_max_default;
-
-  size_t SerializedSize() const override { return 4u * sizeof(float); }
-
-  void Serialize(uint8_t* out) const override
-  {
-    std::memcpy(out + 0, &band_min, 4);
-    std::memcpy(out + 4, &band_max, 4);
-    std::memcpy(out + 8, &spread_min, 4);
-    std::memcpy(out + 12, &spread_max, 4);
-  }
-
-  bool Deserialize(const uint8_t* in) override
-  {
-    std::memcpy(&band_min, in + 0, 4);
-    std::memcpy(&band_max, in + 4, 4);
-    std::memcpy(&spread_min, in + 8, 4);
-    std::memcpy(&spread_max, in + 12, 4);
-    return true;
-  }
-
-  uint32_t SchemaHash() const override { return 0x54524D32u; /* 'TRM2' */ }
-
-  bool Describe(hostlink::ComponentWriter& w) const override
-  {
-    w.Label("Density Settings");
-    
-    char band_disp_json[64];
-    sprintf(band_disp_json, "{\"kind\":\"linear\",\"lo\":%d,\"hi\":%d}", 
-      static_cast<int>(band_density_min), static_cast<int>(band_density_max));
-
-    bool ok = w.Field("density.min", "Bands Min", 0, hostlink::FieldType::F32, band_min_default, band_disp_json);
-    ok &= w.Field("density.max", "Bands Max", 4, hostlink::FieldType::F32, band_max_default, band_disp_json);
-    ok &= w.Field("spread.min", "Spread Min", 8, hostlink::FieldType::F32, spread_min_dafault);
-    ok &= w.Field("spread.max", "Spread Max", 12, hostlink::FieldType::F32, spread_max_default);
-
-    return ok;
-  }
-};
 
 /////////////////////////////////////////////////////////////////////////////
 // Knobs
@@ -125,49 +61,49 @@ static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
   .Ident("breadth.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, "Empathy Skew")
   .Ident("sensi.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, "Sympathy Skew")
   .Ident("sympa.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
   .Ident("shift.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
   .Ident("warp.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, "Melt Skew")
   .Ident("melt.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
   .Ident("ripple.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
   .Ident("smear.skew")
@@ -200,37 +136,37 @@ static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   .Ident("sympa.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_decay_skew));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
   .Ident("shift.both")
   .Linear(-1.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_shift_skew));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
   .Ident("warp.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_warp_skew));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, "Melt")
   .Ident("melt.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_melt_skew));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ident("smear.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_smear_skew));
-
+  
 ALCHEMY_SRAM  
 static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
   .Ident("ripple.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_ripple_skew));
-
+  
 
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
@@ -242,12 +178,12 @@ static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
 // Pages
 enum PageId : uint8_t
 {
-  kPageVibes, kPageVibeSkew, kPageRizz, kPageRizzSkew,
+  kPageVibe, kPageVibeSkew, kPageRizz, kPageRizzSkew,
   kPageCount
 };
-
+  
 ALCHEMY_SRAM  
-static Page vibe_page = Page(kPageVibes)
+static Page vibe_page = Page(kPageVibe)
   .Name("Vibes")
   .Color(vibe_palette.active.hex)
   .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
@@ -257,13 +193,13 @@ static Page vibe_skew_page = Page(kPageVibeSkew)
   .Name("Vibe Skew")
   .Color(vibe_palette.active.hex)
   .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew);
-
+  
 ALCHEMY_SRAM  
 static Page rizz_page = Page(kPageRizz)
   .Name("Rizz")
   .Color(rizz_palette.active.hex)
   .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
-
+  
 ALCHEMY_SRAM  
 static Page rizz_skew_page = Page(kPageRizzSkew)
   .Name("Rizz Skew")
@@ -286,7 +222,8 @@ Profiler                            profiler(hw);
 CvMatrix                            cv_matrix(kNumCvInputs);
 hostlink::Host                      host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
 
-static DensitySettings density_settings;
+static VibeSettings vibe_settings;
+static RizzSettings rizz_settings;
 
 constexpr uint8_t mode_page = 0;
 constexpr uint8_t mode_pot  = kPotTopRight;
@@ -295,26 +232,31 @@ constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono"
 
 static void ConfigureInterface()
 {
-  pager.Cycle(hw.buttons[kButtonB1], kPageVibes, kPageRizz)
+  pager.Cycle(hw.buttons[kButtonB1], kPageVibe, kPageRizz)
        .Shift(hw.buttons[kButtonB2], kPageVibeSkew)
-       .From(kPageVibes)
+       .From(kPageVibe)
        .Shift(hw.buttons[kButtonB3], kPageRizzSkew)
        .From(kPageRizz);
 
-  settings.UseBrightness();
-  settings.UsePresets(presets);
   settings.Page(mode_page)
           .Name("Config")
           .Pot(kPotTopRight)
           .Selector(mode_labels)
           .Ident("config.mode");
+
+  // add pages for vibe and rizz settings to add knobs to.
+  settings.Page(1);
+  settings.Page(2);
+
+  settings.UseBrightness();
+  settings.UsePresets(presets);
 }
 
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
-  const float dmin = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_min);
-  const float dmax = vessl::math::lerp(band_density_min, band_density_max, density_settings.band_max);
+  const float dmin = vessl::math::lerp(band_density_min, band_density_max, vibe_settings.band_min);
+  const float dmax = vessl::math::lerp(band_density_min, band_density_max, vibe_settings.band_max);
   {
     // decay
     float decsk = GetSkewValue(vk_decay_skew);
@@ -335,12 +277,8 @@ static void UpdateParams()
     float dampngr   = vessl::math::interp<vessl::math::easing::quad::out>(dampi_min, dampi_max, decr);
     float density_l = vessl::math::lerp(dmin, dmax, dtl);
     float density_r = vessl::math::lerp(dmin, dmax, dtr);
-    float spread_l  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, stl);
-    float spread_r  = vessl::math::lerp(density_settings.spread_min, density_settings.spread_max, str);
-
-    condolences::SetDensity(density_l, density_r);
-    condolences::SetDamping(dampngl, dampngr);
-    condolences::SetSpread(spread_l, spread_r);
+    float spread_l  = vessl::math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, stl);
+    float spread_r  = vessl::math::lerp(vibe_settings.spread_min, vibe_settings.spread_max, str);
 
     float sens  = vk_sensitivity.Value();
     float sensk = GetSkewValue(vk_sensitivity_skew);
@@ -363,8 +301,14 @@ static void UpdateParams()
 
     float ripl  = vk_ripple.Value();
     float ripsk = GetSkewValue(vk_ripple_skew);
-    float ripll = vessl::math::constrain(vessl::math::lerp(rippl_min, rippl_max, ripl - ripsk), rippl_min, rippl_max);
-    float riplr = vessl::math::constrain(vessl::math::lerp(rippl_min, rippl_max, ripl + ripsk), rippl_min, rippl_max);
+    float ripdmpl = 1.0f - rizz_settings.rippl_damp_reduct*decl;
+    float ripdmpr = 1.0f - rizz_settings.rippl_damp_reduct*decr;
+    float ripbstl = rizz_settings.rippl_smear_boost*vessl::math::constrain(smear - smesk, ripple::smear_boost_min, ripple::smear_boost_max);
+    float ripbstr = rizz_settings.rippl_smear_boost*vessl::math::constrain(smear + smesk, ripple::smear_boost_min, ripple::smear_boost_max);
+    float ripll = vessl::math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstl)*ripdmpl, ripl - ripsk), ripple::amount_min, ripple::amount_max);
+    float riplr = vessl::math::constrain(vessl::math::lerp(0.f, (rizz_settings.rippl_amount_max+ripbstr)*ripdmpr, ripl + ripsk), ripple::amount_min, ripple::amount_max);
+    float ripdl = vessl::math::constrain(rizz_settings.rippl_depth + ripbstl*0.25f, ripple::depth_min, ripple::depth_max);
+    float ripdr = vessl::math::constrain(rizz_settings.rippl_depth + ripbstr*0.25f, ripple::depth_min, ripple::depth_max);
 
     float motn  = vk_motion.Value();
     float motsk = GetSkewValue(vk_motion_skew);
@@ -373,13 +317,16 @@ static void UpdateParams()
 
     float mixd  = vk_mix_dry.Value();
     float mixw  = vk_mix_wet.Value();
-
+    
+    condolences::SetDensity(density_l, density_r);
+    condolences::SetDamping(dampngl, dampngr);
+    condolences::SetSpread(spread_l, spread_r);
     condolences::SetSensitivity(sensl, sensr);
     condolences::SetShift(shft - shfsk, shft + shfsk);
     condolences::SetSpacing(warp - warsk, warp + warsk);
     condolences::SetSmear(smrl, smrr);
     condolences::SetMelt(melt - melsk, melt + melsk);
-    condolences::SetRipple(ripll, riplr);
+    condolences::SetRipple(ripll, riplr, ripdl, ripdr);
     condolences::SetMotion(motl, motr);
     condolences::SetMix(mixd, mixw);
   }
@@ -407,14 +354,14 @@ int main()
     // cv_matrix.Jack(4).To(l_lo_level);
     // cv_matrix.Jack(5).To(l_lo_freq);
 
-    /* Opting into default settings gestures and controls.*/
     ConfigureInterface();
 
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);
     presets.Manage(locks);
     presets.Manage(settings);
-    presets.Manage(density_settings);
+    presets.Manage(vibe_settings);
+    presets.Manage(rizz_settings);
     presets.Manage(profiler);
     //presets.Manage(buttons);
     presets.UseNames();
