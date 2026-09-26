@@ -8,6 +8,8 @@
 
 namespace condolences
 {
+namespace dsp
+{
   using sample_t = float;
   using complex_t = vessl::transform::complex<sample_t>;
   using SampleArray = vessl::array<sample_t>;
@@ -40,10 +42,10 @@ namespace
   // shared between both instances of Condol.  
   sample_t input_window[Condol::AnalysisSize];
   sample_t condol_left_input_record[Condol::AnalysisSize];
-  ALCHEMY_SRAM complex_t condol_left_spectrum[Condol::AnalysisSize/2];
+  complex_t condol_left_spectrum[Condol::AnalysisSize/2];
 
   sample_t condol_right_input_record[Condol::AnalysisSize];
-  ALCHEMY_SRAM complex_t condol_right_spectrum[Condol::AnalysisSize/2];
+  complex_t condol_right_spectrum[Condol::AnalysisSize/2];
 
   ALCHEMY_SRAM sample_t condol_left_input_analysis[Condol::AnalysisSize];
   ALCHEMY_SRAM sample_t condol_right_input_analysis[Condol::AnalysisSize];
@@ -52,8 +54,8 @@ namespace
   ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
 
   sample_t output_window[SpectrumSize];
-  sample_t condol_left_output_buffer[Sympathies::overlap_size];
-  sample_t condol_right_output_buffer[Sympathies::overlap_size];
+  ALCHEMY_SRAM sample_t condol_left_output_buffer[Sympathies::overlap_size];
+  ALCHEMY_SRAM sample_t condol_right_output_buffer[Sympathies::overlap_size];
 
   sample_t sympa_scratch[SpectrumSize];
 
@@ -284,5 +286,6 @@ void Process(
     out_left[i] = limiter_[0].process(l);
     out_right[i] = limiter_[1].process(r);
   }
+}
 }
 }
