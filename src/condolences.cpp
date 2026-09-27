@@ -38,6 +38,8 @@ namespace condolences
  *  @todo generated audio feedback path
  */
 
+Manual thee_manual = Manual();
+
 /////////////////////////////////////////////////////////////////////////////
 // Knobs  
 VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, "Dry")
@@ -208,6 +210,17 @@ static void ConfigureInterface()
   pager.Cycle(hw.buttons[kButtonB1], kPageVibe, kPageRizz)
        .Latch(hw.buttons[kButtonB2], kPageVibe, kPageVibeSkew)
        .Latch(hw.buttons[kButtonB3], kPageRizz, kPageRizzSkew);
+
+  float phys[] = { hw.pots[0].Value(), hw.pots[1].Value(), hw.pots[2].Value(), hw.pots[3].Value(), hw.pots[4].Value(), hw.pots[5].Value() };
+
+  pager.SetStored(kPageVibe, vk_mix_dry.Pot(), 0.5f, phys);
+  pager.SetStored(kPageVibe, vk_mix_wet.Pot(), 0.5f, phys);
+
+  pager.SetStored(kPageRizz, vk_warp.Pot(), 0.f, phys);
+  pager.SetStored(kPageRizz, vk_melt.Pot(), 0.f, phys);
+  pager.SetStored(kPageRizz, vk_smear.Pot(), 0.f, phys);
+  pager.SetStored(kPageRizz, vk_ripple.Pot(), 0.f, phys);
+  pager.SetStored(kPageRizz, vk_motion.Pot(), 0.f, phys); 
 
   config::Configure(settings, presets);
 }
