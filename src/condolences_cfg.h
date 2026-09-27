@@ -15,6 +15,7 @@ using namespace alchemy;
 // User adjustable via knobs on Settings pages.
 namespace settings
 {
+  SelectorHandle mode;
   KnobHandle perception_min;
   KnobHandle perception_max;
   KnobHandle focus_min;
@@ -70,15 +71,16 @@ constexpr float smear_boost_default = 0.20f;
 constexpr uint8_t mode_page = 0;
 constexpr uint8_t mode_pot  = kPotTopRight;
 constexpr uint8_t mode_count = static_cast<uint8_t>(dsp::Mode::Count);
-constexpr const char* mode_labels[mode_count] = { "True Stereo", "Parallel Mono", "Series Mono" };
+constexpr const char* mode_labels[mode_count] = { "Stereo", "Parallel Mono", "Series Mono" };
 
 constexpr uint8_t vibe_page = 1;
 constexpr uint8_t rizz_page = 2;
 
 void Configure(Settings& settings, Presets& presets)
 {
-  settings.Page(mode_page)
-          .Name("Config")
+  settings.Page(mode_page).Name("Config");
+
+  settings::mode = settings.Page(mode_page)
           .Pot(kPotTopRight)
           .Selector(mode_labels)
           .Ident("config.mode");
