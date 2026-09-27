@@ -53,13 +53,13 @@ static VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
 // Skew Knobs
 ALCHEMY_SRAM
 static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
-  .Ident("depth.skew")
+  .Ident("percept.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
 
 ALCHEMY_SRAM
 static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
-  .Ident("breadth.skew")
+  .Ident("focus.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
   
@@ -77,7 +77,7 @@ static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, "Sympathy Skew")
   
 ALCHEMY_SRAM  
 static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
-  .Ident("shift.skew")
+  .Ident("trans.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
   
@@ -101,13 +101,13 @@ static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   
 ALCHEMY_SRAM  
 static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
-  .Ident("ripple.skew")
+  .Ident("sizzle.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
   
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
-  .Ident("smear.skew")
+  .Ident("emote.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
 
@@ -115,13 +115,13 @@ static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
 // Param Knobs which get skewed
 ALCHEMY_SRAM
 static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
-  .Ident("depth.both")
+  .Ident("percept.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_density_skew));
 
 ALCHEMY_SRAM
 static VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Focus")
-  .Ident("breadth.both")
+  .Ident("focus.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_spread_skew));
 
@@ -140,7 +140,7 @@ static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   
 ALCHEMY_SRAM  
 static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
-  .Ident("shift.both")
+  .Ident("trans.both")
   .Linear(-1.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_shift_skew));
   
@@ -164,13 +164,13 @@ static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   
 ALCHEMY_SRAM  
 static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
-  .Ident("ripple.both")
+  .Ident("sizzle.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_ripple_skew));
   
 ALCHEMY_SRAM  
 static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
-  .Ident("motion.both")
+  .Ident("emote.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_motion_skew));
 
@@ -178,13 +178,17 @@ static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
 // Pages
 enum PageId : uint8_t
 {
-  kPageVibe, kPageVibeSkew, kPageRizz, kPageRizzSkew,
+  kPageVibe, 
+  kPageRizz, 
+  kPageVibeSkew, 
+  kPageRizzSkew,
+
   kPageCount
 };
   
 ALCHEMY_SRAM  
 static Page vibe_page = Page(kPageVibe)
-  .Name("Vibes")
+  .Name("Vibe")
   .Color(vibe_palette.active.hex)
   .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
 
@@ -322,7 +326,7 @@ static void UpdateParams()
 
     float motn  = vk_motion.Value();
     float motsk = GetSkewValue(vk_motion_skew);
-    
+
     float motl  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn - motsk), 
                                   config::motio_min, 
                                   config::motio_max);
@@ -375,8 +379,8 @@ int main()
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);
     presets.Manage(locks);
-    presets.Manage(settings);
     presets.Manage(profiler);
+    presets.Manage(settings);
     //presets.Manage(buttons);
     presets.UseNames();
 
