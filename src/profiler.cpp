@@ -92,7 +92,7 @@ void Profiler::Serialize(uint8_t *out) const
 
 uint32_t Profiler::SchemaHash() const
 {
-  return 0xDEADBEEFu;
+  return ('P'<<24) | ('R'<<16) | ('F'<<8) | 1u;
 }
 
 bool Profiler::Describe(hostlink::ComponentWriter &w) const

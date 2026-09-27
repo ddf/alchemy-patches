@@ -54,14 +54,13 @@ namespace
   ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
 
   sample_t output_window[SpectrumSize];
-  ALCHEMY_SRAM sample_t condol_left_output_buffer[Sympathies::overlap_size];
-  ALCHEMY_SRAM sample_t condol_right_output_buffer[Sympathies::overlap_size];
+  sample_t* condol_left_output_buffer; //[Sympathies::overlap_size];
+  sample_t* condol_right_output_buffer; //[Sympathies::overlap_size];
 
   sample_t sympa_scratch[SpectrumSize];
 
   constexpr size_t sample_data_count = SpectrumSize*2*2;
-  //ALCHEMY_SRAM sample_t output_sample_data[sample_data_count];
-  sample_t* output_sample_data = nullptr;
+  sample_t* output_sample_data = nullptr; // [sample_data_count];
 
   // we allocate these, but don't directly modify them
   SpectralGen* spectral_[2];
@@ -104,6 +103,9 @@ void Init(float sample_rate)
     vessl::array<sample_t>(output_sample_data + SpectrumSize*3, SpectrumSize)
   };
 
+  condol_left_output_buffer = new sample_t[Sympathies::overlap_size];
+  condol_right_output_buffer = new sample_t[Sympathies::overlap_size];
+
   spectral_[0] = new SpectralGen(data0, sample_rate);
   spectral_[1] = new SpectralGen(data1, sample_rate);
 
@@ -135,6 +137,8 @@ void Init(float sample_rate)
 
 void DeInit()
 {
+  delete[] condol_left_output_buffer;
+  delete[] condol_right_output_buffer;
   delete[] output_sample_data;
 
   delete spectral_[0];
