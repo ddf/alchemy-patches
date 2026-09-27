@@ -15,6 +15,7 @@
 #include "attributes.h"
 #include "profiler.h"
 #include "condolences_cfg.h"
+#include "condolences_man.h"
 #include "condolences_gui.h"
 #include "condolences_dsp.h"
 #include "vessl/vessl.h"
@@ -22,7 +23,9 @@
 
 using namespace vessl;
 using namespace alchemy;
-using namespace condolences;
+
+namespace condolences
+{
 
 /**
  * Definitely:
@@ -37,117 +40,117 @@ using namespace condolences;
 
 /////////////////////////////////////////////////////////////////////////////
 // Knobs  
-static VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, "Dry")
+VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, "Dry")
   .Ident("mix.dry")
   .Linear(0.f, 1.f)
   .Ring(Level(vibe_palette.active.rgb));
 
-static VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
+VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
   .Ident("mix.wet")
   .Linear(0.f, 1.f)
   .Ring(Level(vibe_palette.active.rgb));
 
 ///////////////////////////////////////////////////////////////////////
 // Skew Knobs
-static VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
+VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
   .Ident("percept.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
 
-static VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
+VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
   .Ident("focus.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
     
-static VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, "Empathy Skew")
+VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, "Empathy Skew")
   .Ident("sensi.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
     
-static VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, "Sympathy Skew")
+VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, "Sympathy Skew")
   .Ident("sympa.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
     
-static VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
+VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
   .Ident("trans.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-static VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
+VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
   .Ident("warp.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-static VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, "Melt Skew")
+VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, "Melt Skew")
   .Ident("melt.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-static VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
+VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-static VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
+VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
   .Ident("sizzle.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-static VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
+VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
   .Ident("emote.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
 
 /////////////////////////////////////////////////////////////////////////
 // Param Knobs which get skewed
-static VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
+VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
   .Ident("percept.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_density_skew));
 
-static VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Focus")
+VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Focus")
   .Ident("focus.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_spread_skew));
 
-static VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, "Empathy")
+VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, "Empathy")
   .Ident("sensi.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_sensitivity_skew));
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-static VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
+VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
   .Ident("sympa.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_decay_skew));
     
-static VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
+VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
   .Ident("trans.both")
   .Linear(-1.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_shift_skew));
     
-static VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
+VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
   .Ident("warp.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_warp_skew));
     
-static VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, "Melt")
+VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, "Melt")
   .Ident("melt.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_melt_skew));
     
-static VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
+VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
   .Ident("smear.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_smear_skew));
     
-static VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
+VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
   .Ident("sizzle.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_ripple_skew));
     
-static VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
+VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
   .Ident("emote.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_motion_skew));
@@ -164,22 +167,22 @@ enum PageId : uint8_t
   kPageCount
 };
     
-static Page vibe_page = Page(kPageVibe)
+Page vibe_page = Page(kPageVibe)
   .Name("Vibe")
   .Color(vibe_palette.active.hex)
   .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
 
-static Page vibe_skew_page = Page(kPageVibeSkew)
+Page vibe_skew_page = Page(kPageVibeSkew)
   .Name("Vibe Skew")
   .Color(vibe_palette.active.hex)
   .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew);
     
-static Page rizz_page = Page(kPageRizz)
+Page rizz_page = Page(kPageRizz)
   .Name("Rizz")
   .Color(rizz_palette.active.hex)
   .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
     
-static Page rizz_skew_page = Page(kPageRizzSkew)
+Page rizz_skew_page = Page(kPageRizzSkew)
   .Name("Rizz Skew")
   .Color(rizz_palette.active.hex)
   .Knobs(vk_shift_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew, vk_ripple_skew, vk_motion_skew);
@@ -203,10 +206,8 @@ hostlink::Host                      host(presets, "condolences", "Condolences", 
 static void ConfigureInterface()
 {
   pager.Cycle(hw.buttons[kButtonB1], kPageVibe, kPageRizz)
-       .Shift(hw.buttons[kButtonB2], kPageVibeSkew)
-       .From(kPageVibe)
-       .Shift(hw.buttons[kButtonB3], kPageRizzSkew)
-       .From(kPageRizz);
+       .Latch(hw.buttons[kButtonB2], kPageVibe, kPageVibeSkew)
+       .Latch(hw.buttons[kButtonB3], kPageRizz, kPageRizzSkew);
 
   config::Configure(settings, presets);
 }
@@ -328,6 +329,9 @@ static void UpdateParams()
     dsp::SetMode(static_cast<dsp::Mode>(mode));
   }
 }
+} // namespace condolences
+
+using namespace condolences;
 
 int main()
 {
@@ -351,6 +355,7 @@ int main()
     // cv_matrix.Jack(4).To(l_lo_level);
     // cv_matrix.Jack(5).To(l_lo_freq);
 
+    manual::AttachTo(host);
     ConfigureInterface();
 
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */

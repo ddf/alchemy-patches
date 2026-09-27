@@ -5,9 +5,6 @@
 
 using namespace alchemy;
 
-extern AlchemyLab hw;
-extern Pager pager;
-
 constexpr uint8_t kButtonShift = alchemy::kButtonB2;
 
 DEFINE_VESSICLE_COLOR(vibe_color_right, 3300CC)
