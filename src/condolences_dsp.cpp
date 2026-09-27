@@ -25,10 +25,6 @@ namespace dsp
 namespace
 {
   /** 
-   * @todo allocate all memory for Condolences instances from here instead of using create.
-   * embed some of it in the binary for faster access.
-   * goal would be to get us running with spectrum size 4096 and overlap 4.
-   * 
    * @todo there is room for the signal arrays required by vessl::spectral if we work in 16-bit fixed point.
    * however, to do this we will need to add 16-bit fixed point support to vessl,
    * and then add overloads for the 16-bit ARM DSP transforms.
@@ -47,13 +43,13 @@ namespace
   sample_t condol_right_input_record[Condol::AnalysisSize];
   complex_t condol_right_spectrum[Condol::AnalysisSize/2];
 
-  ALCHEMY_SRAM sample_t condol_left_input_analysis[Condol::AnalysisSize];
-  ALCHEMY_SRAM sample_t condol_right_input_analysis[Condol::AnalysisSize];
+  sample_t condol_left_input_analysis[Condol::AnalysisSize];
+  sample_t condol_right_input_analysis[Condol::AnalysisSize];
 
   ALCHEMY_SRAM FrequencyBand output_bands[SpectrumSize];
   ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
 
-  sample_t output_window[SpectrumSize];
+  sample_t* output_window; //[SpectrumSize];
   sample_t* condol_left_output_buffer; //[Sympathies::overlap_size];
   sample_t* condol_right_output_buffer; //[Sympathies::overlap_size];
 
@@ -79,6 +75,7 @@ void Init(float sample_rate)
   //memset(data0, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
   //memset(data1, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
 
+  output_window = new sample_t[SpectrumSize];
   output_sample_data = new sample_t[sample_data_count];
 
   constexpr size_t sample_data_size = sizeof(sample_t)*sample_data_count;
@@ -139,6 +136,7 @@ void DeInit()
 {
   delete[] condol_left_output_buffer;
   delete[] condol_right_output_buffer;
+  delete[] output_window;
   delete[] output_sample_data;
 
   delete spectral_[0];
