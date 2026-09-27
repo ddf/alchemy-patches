@@ -224,7 +224,7 @@ Presets                             presets (hw.seed.qspi);
 Settings                            settings(hw, &pager);
 Profiler                            profiler(hw);
 CvMatrix                            cv_matrix(kNumCvInputs);
-hostlink::Host                      host(presets, "condolences", "Condolences", "0.1.1", "4c9c46483d18218e42e47b4ddc9c4a74ac903017");
+hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.0", "21ab104861902f5dfbca7e11906be2e98e994334");
 
 static void ConfigureInterface()
 {
