@@ -38,16 +38,16 @@ namespace
   // shared between both instances of Condol.  
   sample_t input_window[Condol::AnalysisSize];
   sample_t condol_left_input_record[Condol::AnalysisSize];
-  complex_t condol_left_spectrum[Condol::AnalysisSize/2];
-
   sample_t condol_right_input_record[Condol::AnalysisSize];
-  complex_t condol_right_spectrum[Condol::AnalysisSize/2];
-
   sample_t condol_left_input_analysis[Condol::AnalysisSize];
   sample_t condol_right_input_analysis[Condol::AnalysisSize];
+  
+  complex_t condol_left_spectrum[Condol::AnalysisSize/2];
+  complex_t condol_right_spectrum[Condol::AnalysisSize/2];
 
-  ALCHEMY_SRAM FrequencyBand output_bands[SpectrumSize];
   ALCHEMY_SRAM complex_t output_spectrum[SpectrumSize];
+
+  FrequencyBand* output_bands; // [SpectrumSize];
 
   sample_t* output_window; //[SpectrumSize];
   sample_t* condol_left_output_buffer; //[Sympathies::overlap_size];
@@ -74,6 +74,9 @@ void Init(float sample_rate)
 {
   //memset(data0, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
   //memset(data1, 0, sizeof(int16_t)*(SpectrumSize*Overlap*2));
+
+  output_bands = new FrequencyBand[SpectrumSize];
+  memset(output_bands, 0, sizeof(FrequencyBand)*SpectrumSize);
 
   output_window = new sample_t[SpectrumSize];
   output_sample_data = new sample_t[sample_data_count];
@@ -138,6 +141,7 @@ void DeInit()
   delete[] condol_right_output_buffer;
   delete[] output_window;
   delete[] output_sample_data;
+  delete[] output_bands;
 
   delete spectral_[0];
   delete spectral_[1];

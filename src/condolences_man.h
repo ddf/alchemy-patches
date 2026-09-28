@@ -44,14 +44,72 @@ namespace manual
 {
 void AttachTo(hostlink::Host& host)
 {
-    thee_manual.Tagline("Stereo spectral processor loosely based on the phenomenon of sympathetic vibration.")
-               .Preamble("Your signal will be analyzed with varying degrees of attention to ascertain the frequency of the vibrations contained therein. "
+    thee_manual .Tagline("Stereo spectral processor loosely based on the phenomenon of sympathetic vibration.")
+                .Preamble("Your signal will be analyzed with varying degrees of attention to ascertain the frequency of the vibrations contained therein. "
                          "We shall then attempt to reproduce your signal by responding to its content with empathy and sympathy. "
                          "However, we are _not_ you and are bound to introduce our own interpretations, extensions, transformations, and misunderstandings. "
                          "You may then mix your signal with ours to produce a novel perspective that is greater than the sum of its parts.  \n  \n"
                          "In other words: we are sorry for your loss, resonate with your grief, and transform it into psychedelia.")
-               .Section("overview", "Overview", 
-                        "This is the overview.");
+                .Section("overview", "Overview", 
+                        "**Condolences** is a [phase vocoder](https://en.wikipedia.org/wiki/Phase_vocoder) with an analysis frame size of 1024 samples, "
+                        "a synthesis frame size of 4096 samples, and an overlap of 512 samples. This means that every 512 samples, the input signal "
+                        "is analyzed and transferred to the synthesis spectrum, which is then resynthesized to produce the next frame of output samples. "
+                        "Spectral information is modified during both the transfer from analysis to synthesis, as well as prior to synthesizing a frame. "
+                        "The parameters on the Vibe and Rizz pages give the performer control over this modification process."
+                        )
+                .Section("analysis-to-synthesis", "Analysis -> Synthesis",
+                        "After analysis, we conditionally transfer all 512 frequency bands from the analysis spectrum to the synthesis spectrum. "
+                        "In order to be transferred, an analysis band must have a magnitude greater than the threshold set by the **Perception** parameter (Vibe page, top left). "
+                        "After passing the Perception test, the target frequency band in the synthesis spectrum is determined by first shifting the frequency "
+                        "of the analysis band using the **Transpose** parameter (Rizz page, top left), obtaining a target band index, " 
+                        "and then using the **Warp** parameter (Rizz page, top right) to 'linearize' it. "
+                        "In oscillator language, *Transpose* is akin to shifting the frequency of each analysis band using exponential FM and *Warp* is akin to linear FM."
+                        )
+                .Section("sympathetic-vibration", "Sympathetic Vibration",
+                        "Once the target frequency band in the synthesis spectrum has been calculated, it is potentially 'excited' by the analysis frequency band. "
+                        "The **Empathy** parameter (Vibe page, middle left) is essentially how responsive synthesis is to the input signal. Empathy sets a magnitude "
+                        "threshold that the synthesis band must be _below_ in order for the analysis band value to replace it. High Empathy means that if an analysis "
+                        "band passes the Perception test, it will be almost certainly be transferred to the synthesis spectrum. Low Empathy means that synthesis bands will not change "
+                        "until the energy in them has decayed enough for analysis energy to replace it. The **Sympathy** parameter (Vibe page, middle right) is what controls "
+                        "the rate of this decay. High Sympathy results in long decays in the synthesis spectrum, creating reverb-like effects. Low Sympathy decays quickly, "
+                        "allowing the synthesis spectrum to 'keep up' with high Empathy analysis.")
+                .Section("focus", "Focus",
+                        "The final step in transferring the analysis spectrum to the synthesis spectrum is to _widen_ the impact of analysis bands on the sythesis spectrum. "
+                        "The **Focus** parameter (Vibe page, top right) sets a falloff amount that controls how much of the analysis band is _also_ placed into the four adjacent "
+                        "bands above and below the target synthesis band. Higher Focus tends to improve the accuracy of resynthesis because the the bandwidth of one synthesis band "
+                        "is 4 times that of one analysis band. In other words, a single analysis band represents the energy in a range of frequencies that is represented in the synthesis "
+                        "spectrum by 4 adjacent frequency bands."
+                        )
+                .Section("interpretation", "Interpretation",
+                         "As with any attempt to empathize or sympathize with another person, our attempt gets some things wrong. In this case, on purpose. "
+                         "Right before synthesizing a new frame of audio we massage the synthesis spectrum in three ways: Melt, Sizzle, and Smear.  \n  \n"
+                         "First, the magnitudes of the synthesis frequency bands are run through a low pass filter in reverse order. " 
+                         "The **Melt** parameter (Rizz page, middle left) controls the cutoff of this filter. As Melt increases the cutoff lowers, "
+                         "smoothing out jumps in magnitude from one band to the next. The effect is that the frequency content of the spectrum sounds "
+                         "as if it is 'melting' downwards in pitch. High Melt also tends to remove energy from the spectrum, making it decay more quickly.  \n  \n"
+                         "After melting the spectrum, _sizzle_ is applied. The **Sizzle** parameter (Rizz page, bottom left) controls modulation depth of an LFO that is applied "
+                         " to each band's magnitude. The amount of modulation also decreases with the magnitude of the band, so we don't introduce too much signal where there was none. "
+                        )
+                .Section("misunderstanding", "Misunderstanding",
+                         "Finally, the spectrum is 'smeared' by running the complex representation through a high pass filter whose cutoff is modulated by an LFO. "
+                         "The direction in which we process the spectrum is determined by the phase of the LFO. The **Smear** parameter (Rizz page, middle right) controls the speed of the LFO "
+                         "and the **Emote** parameter (Rizz page, bottom right) controls the depth of filter cutoff modulation. The effect is that the frequency content of the synthesized signal sounds "
+                         "as if it is swimming up and down, a bit like warble on a vinyl record, but can be made much more extreme."
+                        )
+                .Section("resynthesizing", "Resynthesizing",
+                         "The operations of Interpretation and Misunderstanding occur in-place on the spectral information. This means that they interact with each other and with all other parameters "
+                         "in sometimes unexpected ways. We recommend changing things slowly to find interesting combinations. " 
+                         "After all of this faffing about, the output signal is synthesized using a standard overlap-add algorithm."
+                        )
+                .Section("modes", "Modes",
+                         "By default, Condolences runs two parallel instances of the above effect on the left and right audio inputs of the Alchemy Lab. "
+                         "This means you can use it as a stereo signal processor or as two mono processors. "
+                         "There are two additional modes available that can be set from the Config Settings page: Parallel Mono and Series Mono. "
+                         "In **Parallel Mono** mode, the two input channels are summed to one mono signal, which is then run through the left and right processors in parallel and output "
+                         "to the left and right outputs as in Stereo mode. In **Series Mono** mode, the two input channels are summed to one mono signal, which is then run through "
+                         "the left and right processors in series. That is: input -> mono -> left processor -> right processor -> output. In this mode, the left and right audio outputs "
+                         "of Alchemy Lab will be identical."
+                        );
 
     host.Attach(thee_manual);
 
