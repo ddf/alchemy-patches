@@ -33,6 +33,7 @@ namespace condolences
  *  @todo use clip indicator
  *  @todo input gain and output gain in Config Settings
  *  @todo define buttons to get help text in the web interface
+ *  @todo help text on the Mode selector
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
@@ -206,7 +207,7 @@ Settings                            settings(hw, &pager);
 Profiler                            profiler(hw);
 #endif
 CvMatrix                            cv_matrix(kNumCvInputs);
-hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.2", "ff54a749e877014d4dc6d808103f1259914b5413");
+hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.3", "1c3d467489afa2809d79810dfab435cc58d11a39");
 
 static void ConfigureInterface()
 {
