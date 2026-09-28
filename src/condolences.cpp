@@ -31,11 +31,12 @@ namespace condolences
  * Definitely:
  *  @todo setup CV routing
  *  @todo use clip indicator
- *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
- *  @todo implement Help documentation
+ *  @todo input gain and output gain in Config Settings
+ *  @todo define buttons to get help text in the web interface
  * 
  * Maybe and/or later:
  *  @todo generated audio feedback path
+ *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
  */
 
 Manual thee_manual = Manual();
@@ -201,7 +202,9 @@ Pager                               pager   (kPageCount, kNumPots);
 ParamLock<kLockCount, LockSettings> locks   (hw.buttons[kButtonB1], pager);
 Presets                             presets (hw.seed.qspi);
 Settings                            settings(hw, &pager);
+#ifdef PROFILE_ENABLED
 Profiler                            profiler(hw);
+#endif
 CvMatrix                            cv_matrix(kNumCvInputs);
 hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.2", "ff54a749e877014d4dc6d808103f1259914b5413");
 
@@ -374,7 +377,9 @@ int main()
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);
     presets.Manage(locks);
+  #ifdef PROFILE_ENABLED
     presets.Manage(profiler);
+  #endif
     presets.Manage(settings);
     //presets.Manage(buttons);
     presets.UseNames();
@@ -396,7 +401,11 @@ int main()
     presets.BootLoad();
 
     UpdateParams();
+  #ifdef PROFILE_ENABLED
     profiler.StartAudio(dsp::Process);
+  #else
+    hw.StartAudio(dsp::Process);
+  #endif
 
     for (;;) loop.Tick();
 }

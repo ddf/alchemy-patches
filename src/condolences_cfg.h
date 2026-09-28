@@ -6,6 +6,8 @@
 #include "alchemy/surface/settings.h"
 #include "alchemy/surface/presets.h"
 
+// #define PROFILE_ENABLED
+
 namespace condolences
 {
 namespace config
