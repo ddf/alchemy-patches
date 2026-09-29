@@ -29,13 +29,11 @@ namespace condolences
 
 /**
  * Definitely:
- *  @todo setup CV routing
- *  @todo use clip indicator
  *  @todo input gain and output gain in Config Settings
  *  @todo define buttons to get help text in the web interface
- *  @todo help text on the Mode selector
  * 
  * Maybe and/or later:
+ *  @todo use clip indicator
  *  @todo generated audio feedback path
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
  */
@@ -365,12 +363,12 @@ int main()
     // }
 
     /* CV routing.  A static layout is just setting each channel once. */
-    // cv_matrix.Jack(0).To(l_hi_level);
-    // cv_matrix.Jack(1).To(l_hi_freq);
-    // cv_matrix.Jack(2).To(l_mid_level);
-    // cv_matrix.Jack(3).To(l_mid_freq);
-    // cv_matrix.Jack(4).To(l_lo_level);
-    // cv_matrix.Jack(5).To(l_lo_freq);
+    cv_matrix.Jack(0).To(vk_density);
+    cv_matrix.Jack(1).To(vk_sensitivity);
+    cv_matrix.Jack(2).To(vk_spread);
+    cv_matrix.Jack(3).To(vk_decay);
+    cv_matrix.Jack(4).To(vk_shift);
+    cv_matrix.Jack(5).To(vk_warp);
 
     manual::AttachTo(host);
     ConfigureInterface();
@@ -390,7 +388,7 @@ int main()
     loop.Use(pager)
         .Use(locks)
         .Use(settings)
-        //.Use(cv_matrix)
+        .Use(cv_matrix)
         .Use(vibe_page)
         .Use(vibe_skew_page)
         .Use(rizz_page)

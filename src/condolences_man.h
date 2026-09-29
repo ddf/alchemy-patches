@@ -2,8 +2,10 @@
 
 #include "alchemy/host_link/host.h"
 #include "alchemy/surface/virtual_knob.h"
+#include "alchemy/surface/jack.h"
 #include "alchemy/surface/page.h"
 #include "alchemy/surface/manual.h"
+#include "condolences_cfg.h"
 
 using namespace alchemy;
 
@@ -42,6 +44,17 @@ extern VirtualKnob vk_motion_skew;
 
 namespace manual
 {
+constexpr Jack jk_in_l = Jack("IN_L", "In L", JackSig::AudioIn).Short("IN L");
+constexpr Jack jk_in_r = Jack("IN_R", "In R", JackSig::AudioIn).Short("IN R");
+constexpr Jack jk_cv_1 = Jack("CV1", "Perception CV", JackSig::CvBi).Short("PCPT").SeeAlso(vk_density);
+constexpr Jack jk_cv_2 = Jack("CV2", "Empathy CV", JackSig::CvBi).Short("EMPA").SeeAlso(vk_sensitivity);
+constexpr Jack jk_cv_3 = Jack("CV3", "Focus CV", JackSig::CvBi).Short("FOCS").SeeAlso(vk_spread);
+constexpr Jack jk_cv_4 = Jack("CV4", "Sympathy CV", JackSig::CvBi).Short("SYMP").SeeAlso(vk_decay);
+constexpr Jack jk_cv_5 = Jack("CV5", "Transpose CV", JackSig::CvBi).Short("TRPS").SeeAlso(vk_shift);
+constexpr Jack jk_cv_6 = Jack("CV6", "Warp CV", JackSig::CvBi).Short("WARP").SeeAlso(vk_warp);
+constexpr Jack jk_out_l = Jack("OUT_L", "Out L", JackSig::AudioOut).Short("OUT L");
+constexpr Jack jk_out_r = Jack("OUT_R", "Out R", JackSig::AudioOut).Short("OUT R");
+
 void AttachTo(hostlink::Host& host)
 {
     thee_manual .Tagline("Stereo spectral processor loosely based on the phenomenon of sympathetic vibration.")
@@ -112,6 +125,11 @@ void AttachTo(hostlink::Host& host)
                         );
 
     host.Attach(thee_manual);
+    host.Jacks(jk_cv_1, jk_cv_2, jk_cv_3, jk_cv_4, jk_cv_5, jk_cv_6);
+
+    config::settings::mode.Help("**Stereo Mode** runs two parallel instances of Condolences on the left and right audio inputs. "
+                                "**Parallel Mono** sums the input to mono and processes it in parallel. "
+                                "**Series Mono** sums the input to mono and processes it through both processors in series. Left and Right output are the same.");
 
     vibe_page.Help("Control how the input spectrum influences the output spectrum.  \n"
                    "Perception, Focus, Empathy, and Sympathy can be skewed using controls on the Vibe Skew page.  \n  \n"
