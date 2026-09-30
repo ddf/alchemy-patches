@@ -46,12 +46,12 @@ namespace manual
 {
 constexpr Jack jk_in_l = Jack("IN_L", "In L", JackSig::AudioIn).Short("IN L");
 constexpr Jack jk_in_r = Jack("IN_R", "In R", JackSig::AudioIn).Short("IN R");
-constexpr Jack jk_cv_1 = Jack("CV1", "Perception CV", JackSig::CvBi).Short("PCPT").SeeAlso(vk_density);
-constexpr Jack jk_cv_2 = Jack("CV2", "Empathy CV", JackSig::CvBi).Short("EMPA").SeeAlso(vk_sensitivity);
-constexpr Jack jk_cv_3 = Jack("CV3", "Focus CV", JackSig::CvBi).Short("FOCS").SeeAlso(vk_spread);
-constexpr Jack jk_cv_4 = Jack("CV4", "Sympathy CV", JackSig::CvBi).Short("SYMP").SeeAlso(vk_decay);
-constexpr Jack jk_cv_5 = Jack("CV5", "Transpose CV", JackSig::CvBi).Short("TRPS").SeeAlso(vk_shift);
-constexpr Jack jk_cv_6 = Jack("CV6", "Warp CV", JackSig::CvBi).Short("WARP").SeeAlso(vk_warp);
+constexpr Jack jk_cv_1 = Jack("J3", "Perception CV", JackSig::CvBi).Short("PRCPTN").SeeAlso(vk_density);
+constexpr Jack jk_cv_2 = Jack("J4", "Empathy CV", JackSig::CvBi).Short("EMPTHY").SeeAlso(vk_sensitivity);
+constexpr Jack jk_cv_3 = Jack("J5", "Focus CV", JackSig::CvBi).Short("FOCUS").SeeAlso(vk_spread);
+constexpr Jack jk_cv_4 = Jack("J6", "Sympathy CV", JackSig::CvBi).Short("SYMPA").SeeAlso(vk_decay);
+constexpr Jack jk_cv_5 = Jack("J7", "Transpose CV", JackSig::CvBi).Short("TRNSP").SeeAlso(vk_shift);
+constexpr Jack jk_cv_6 = Jack("J8", "Warp CV", JackSig::CvBi).Short("WARP").SeeAlso(vk_warp);
 constexpr Jack jk_out_l = Jack("OUT_L", "Out L", JackSig::AudioOut).Short("OUT L");
 constexpr Jack jk_out_r = Jack("OUT_R", "Out R", JackSig::AudioOut).Short("OUT R");
 
