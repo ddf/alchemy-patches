@@ -42,6 +42,10 @@ extern VirtualKnob vk_smear_skew;
 extern VirtualKnob vk_ripple_skew;
 extern VirtualKnob vk_motion_skew;
 
+extern VirtualButton vb_page_lock;
+extern VirtualButton vb_vibe_latch;
+extern VirtualButton vb_rizz_latch;
+
 namespace manual
 {
 constexpr Jack jk_in_l = Jack("IN_L", "In L", JackSig::AudioIn).Short("IN L");
@@ -132,7 +136,8 @@ void AttachTo(hostlink::Host& host)
                                 "**Series Mono** sums the input to mono and processes it through both processors in series. Left and Right output are the same.");
 
     vibe_page.Help("Control how the input spectrum influences the output spectrum.  \n"
-                   "Perception, Focus, Empathy, and Sympathy can be skewed using controls on the Vibe Skew page.  \n  \n"
+                   "Perception, Focus, Empathy, and Sympathy can be skewed using controls on the Vibe Skew page. "
+                   "Use B2 to toggle between the Vibe controls and their Skew counterparts when on either page.  \n  \n"
                    "_When skew is present the pip under the parameter knob will blink. " 
                    "The amount and direction of skew will render as two colored bands extending out from the center value._");
     {
@@ -162,7 +167,8 @@ void AttachTo(hostlink::Host& host)
     }
 
     rizz_page.Help("Control the input-to-output spectrum mapping and the output spectrum processing.  \n"
-                   "All parameters can be skewed using controls on the Rizz Skew page.  \n  \n"
+                   "All parameters can be skewed using controls on the Rizz Skew page. "
+                   "Use B3 to toggle between the Rizz controls and their Skew counterparts when on either page.  \n  \n"
                    "_When skew is present the pip under the parameter knob will blink. " 
                    "The amount and direction of skew will render as two colored bands extending out from the center value._");
     {
@@ -215,6 +221,23 @@ void AttachTo(hostlink::Host& host)
         vk_motion_skew.Help("Skew control for Emote.").SeeAlso(vk_motion);
         vk_ripple_skew.Help("Skew control for Sizzle.").SeeAlso(vk_ripple);
     }
+
+    vb_page_lock.Role(VirtualButton::Role::Modal)
+                .Action("tap",       "Next Page")
+                .Action("hold+knob", "Record Param Lock")
+                .Help("Navigation and recording. On its own it walks the pages; held, "
+                      "it turns the pots into recorders.")
+                .GestureHelp("tap", "Pot-catch re-arms on arrival, so nothing jumps.")
+                .GestureHelp("hold+knob", "Repeat on a locked pot to clear it.");
+
+    vb_vibe_latch.Role(VirtualButton::Role::Modal)
+                 .Action("tap", "Toggle between the Vibe & Vibe Skew pages")
+                 .Help("Toggle between the Vibe Page and Vibe Skew Page when viewing either.");
+
+    vb_rizz_latch.Role(VirtualButton::Role::Modal)
+                 .Action("tap", "Toggle between the Rizz & Rizz Skew pages")
+                 .Help("Toggle between the Rizz Page and Rizz Skew Page when viewing either.");
+
 }
 } // namespace manual
 
