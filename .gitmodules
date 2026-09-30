@@ -1,6 +1,7 @@
 [submodule "lib/alchemy-sdk"]
 	path = lib/alchemy-sdk
 	url = https://github.com/ddf/alchemy-sdk.git
+	branch = develop
 [submodule "lib/libDaisy"]
 	path = lib/libDaisy
 	url = https://github.com/electro-smith/libDaisy.git
