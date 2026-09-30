@@ -29,10 +29,10 @@ namespace condolences
 
 /**
  * Definitely:
- *  @todo input gain and output gain in Config Settings
  *  @todo define buttons to get help text in the web interface
  * 
  * Maybe and/or later:
+ *  @todo input gain and output gain in Config Settings
  *  @todo use clip indicator
  *  @todo generated audio feedback path
  *  @todo animate LEDs to give some indication of the contents of the transformed spectrum
@@ -233,7 +233,7 @@ static void ConfigureInterface()
   pager.SetStored(kPageRizz, vk_melt.Pot(), 0.f, phys);
   pager.SetStored(kPageRizz, vk_smear.Pot(), 0.f, phys);
   pager.SetStored(kPageRizz, vk_ripple.Pot(), 0.f, phys);
-  pager.SetStored(kPageRizz, vk_motion.Pot(), 0.f, phys); 
+  pager.SetStored(kPageRizz, vk_motion.Pot(), 0.f, phys);
 
   config::Configure(settings, presets);
 }
@@ -355,6 +355,20 @@ static void UpdateParams()
     dsp::SetMode(static_cast<dsp::Mode>(mode));
   }
 }
+
+void UpdateButtons()
+{
+  hw.leds.SetButtonPair(kButtonB2, vessicle::color::Black.rgb);
+  hw.leds.SetButtonPair(kButtonB3, vessicle::color::Black.rgb);
+  switch(pager.ActivePage())
+  {
+    case kPageVibe: hw.leds.SetButton(kButtonB2, LedPanel::ButtonLed::Top, vibe_palette.active.rgb); break;
+    case kPageVibeSkew: hw.leds.SetButton(kButtonB2, LedPanel::ButtonLed::Bottom, vibe_palette.active.rgb); break;
+    case kPageRizz: hw.leds.SetButton(kButtonB3, LedPanel::ButtonLed::Top, rizz_palette.active.rgb); break;
+    case kPageRizzSkew: hw.leds.SetButton(kButtonB3, LedPanel::ButtonLed::Bottom, rizz_palette.active.rgb); break;
+  }
+}
+
 } // namespace condolences
 
 using namespace condolences;
@@ -404,9 +418,10 @@ int main()
         .Use(vibe_skew_page)
         .Use(rizz_page)
         .Use(rizz_skew_page)
-        .Use(buttons)
+        //.Use(buttons)
         .Use(host)
-        .OnFrame(UpdateParams);
+        .OnFrame(UpdateParams)
+        .OnPageChange(UpdateButtons);
 
     presets.Init();
     presets.BootLoad();
