@@ -179,26 +179,22 @@ enum PageId : uint8_t
 Page vibe_page = Page(kPageVibe)
   .Name("Vibe")
   .Color(vibe_palette.active.hex)
-  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet)
-  .Buttons(vb_page_lock, vb_vibe_latch);
+  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
 
 Page vibe_skew_page = Page(kPageVibeSkew)
   .Name("Vibe Skew")
   .Color(vibe_palette.active.hex)
-  .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew)
-  .Buttons(vb_page_lock, vb_vibe_latch);
+  .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew);
     
 Page rizz_page = Page(kPageRizz)
   .Name("Rizz")
   .Color(rizz_palette.active.hex)
-  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion)
-  .Buttons(vb_page_lock, vb_rizz_latch);
+  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
     
 Page rizz_skew_page = Page(kPageRizzSkew)
   .Name("Rizz Skew")
   .Color(rizz_palette.active.hex)
-  .Knobs(vk_shift_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew, vk_ripple_skew, vk_motion_skew)
-  .Buttons(vb_page_lock, vb_rizz_latch);
+  .Knobs(vk_shift_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew, vk_ripple_skew, vk_motion_skew);
 
 //////////////////////////////////////////////////////////////////////
 // Surfaces
@@ -356,7 +352,7 @@ static void UpdateParams()
   }
 }
 
-void UpdateButtons()
+void RenderOverlay(uint32_t t_ms)
 {
   hw.leds.SetButtonPair(kButtonB2, vessicle::color::Black.rgb);
   hw.leds.SetButtonPair(kButtonB3, vessicle::color::Black.rgb);
@@ -421,7 +417,7 @@ int main()
         //.Use(buttons)
         .Use(host)
         .OnFrame(UpdateParams)
-        .OnPageChange(UpdateButtons);
+        .OnRender(RenderOverlay);
 
     presets.Init();
     presets.BootLoad();
