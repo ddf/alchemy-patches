@@ -230,7 +230,7 @@ Settings                            settings(hw, &pager);
 Profiler                            profiler(hw);
 #endif
 CvMatrix                            cv_matrix(kNumCvInputs);
-hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.3", "1c3d467489afa2809d79810dfab435cc58d11a39");
+hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.4", "525c5abedeae6124c159e0f3a6f306e39ffcb62d");
 
 static void ConfigureInterface()
 {
