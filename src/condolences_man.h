@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "alchemy/surface/page.h"
 #include "alchemy/surface/manual.h"
 #include "condolences_cfg.h"
+#include "condolences_prm.h"
 
 using namespace alchemy;
 
@@ -31,34 +32,9 @@ namespace condolences
 {
 extern Manual thee_manual;
 extern Page vibe_page;
-extern VirtualKnob vk_density;
-extern VirtualKnob vk_spread;
-extern VirtualKnob vk_sensitivity;
-extern VirtualKnob vk_decay;
-extern VirtualKnob vk_mix_dry;
-extern VirtualKnob vk_mix_wet;
-
 extern Page rizz_page;
-extern VirtualKnob vk_shift;
-extern VirtualKnob vk_warp;
-extern VirtualKnob vk_melt;
-extern VirtualKnob vk_smear;
-extern VirtualKnob vk_ripple;
-extern VirtualKnob vk_motion;
-
 extern Page vibe_skew_page;
-extern VirtualKnob vk_density_skew;
-extern VirtualKnob vk_spread_skew;
-extern VirtualKnob vk_sensitivity_skew;
-extern VirtualKnob vk_decay_skew;
-
 extern Page rizz_skew_page;
-extern VirtualKnob vk_shift_skew;
-extern VirtualKnob vk_warp_skew;
-extern VirtualKnob vk_melt_skew;
-extern VirtualKnob vk_smear_skew;
-extern VirtualKnob vk_ripple_skew;
-extern VirtualKnob vk_motion_skew;
 
 extern VirtualButton vb_page_lock;
 extern VirtualButton vb_vibe_latch;
@@ -68,12 +44,12 @@ namespace manual
 {
 constexpr Jack jk_in_l = Jack("IN_L", "In L", JackSig::AudioIn).Short("IN L");
 constexpr Jack jk_in_r = Jack("IN_R", "In R", JackSig::AudioIn).Short("IN R");
-constexpr Jack jk_cv_1 = Jack("J3", "Perception CV", JackSig::CvBi).Short("PRCPTN").SeeAlso(vk_density);
-constexpr Jack jk_cv_2 = Jack("J4", "Empathy CV", JackSig::CvBi).Short("EMPTHY").SeeAlso(vk_sensitivity);
-constexpr Jack jk_cv_3 = Jack("J5", "Focus CV", JackSig::CvBi).Short("FOCUS").SeeAlso(vk_spread);
-constexpr Jack jk_cv_4 = Jack("J6", "Sympathy CV", JackSig::CvBi).Short("SYMPA").SeeAlso(vk_decay);
-constexpr Jack jk_cv_5 = Jack("J7", "Transpose CV", JackSig::CvBi).Short("TRNSP").SeeAlso(vk_shift);
-constexpr Jack jk_cv_6 = Jack("J8", "Warp CV", JackSig::CvBi).Short("WARP").SeeAlso(vk_warp);
+constexpr Jack jk_cv_1 = Jack(cv::jack[cv::A], cv::name[cv::A], JackSig::CvBi).Short(cv::name[cv::A]).SeeAlso(vk_density);
+constexpr Jack jk_cv_2 = Jack(cv::jack[cv::B], cv::name[cv::B], JackSig::CvBi).Short(cv::name[cv::B]).SeeAlso(vk_sensitivity);
+constexpr Jack jk_cv_3 = Jack(cv::jack[cv::C], cv::name[cv::C], JackSig::CvBi).Short(cv::name[cv::C]).SeeAlso(vk_spread);
+constexpr Jack jk_cv_4 = Jack(cv::jack[cv::D], cv::name[cv::D], JackSig::CvBi).Short(cv::name[cv::D]).SeeAlso(vk_decay);
+constexpr Jack jk_cv_5 = Jack(cv::jack[cv::E], cv::name[cv::E], JackSig::CvBi).Short(cv::name[cv::E]).SeeAlso(vk_shift);
+constexpr Jack jk_cv_6 = Jack(cv::jack[cv::F], cv::name[cv::F], JackSig::CvBi).Short(cv::name[cv::F]).SeeAlso(vk_warp);
 constexpr Jack jk_out_l = Jack("OUT_L", "Out L", JackSig::AudioOut).Short("OUT L");
 constexpr Jack jk_out_r = Jack("OUT_R", "Out R", JackSig::AudioOut).Short("OUT R");
 
