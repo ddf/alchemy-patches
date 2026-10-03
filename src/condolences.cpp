@@ -60,117 +60,117 @@ Manual thee_manual = Manual();
 
 /////////////////////////////////////////////////////////////////////////////
 // Knobs  
-VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, "Dry")
+VirtualKnob vk_mix_dry = VirtualKnob(kPotBottomLeft, param::name[param::Dry])
   .Ident("mix.dry")
   .Linear(0.f, 1.f)
   .Ring(Level(vibe_palette.active.rgb));
 
-VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, "Wet")
+VirtualKnob vk_mix_wet = VirtualKnob(kPotBottomRight, param::name[param::Wet])
   .Ident("mix.wet")
   .Linear(0.f, 1.f)
   .Ring(Level(vibe_palette.active.rgb));
 
 ///////////////////////////////////////////////////////////////////////
 // Skew Knobs
-VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, "Perception Skew")
+VirtualKnob vk_density_skew = VirtualKnob(kPotTopLeft, param::name[param::PerceptionSkew])
   .Ident("percept.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
 
-VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, "Focus Skew")
+VirtualKnob vk_spread_skew = VirtualKnob(kPotTopRight, param::name[param::FocusSkew])
   .Ident("focus.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
     
-VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, "Empathy Skew")
+VirtualKnob vk_sensitivity_skew = VirtualKnob(kPotMiddleLeft, param::name[param::EmpathySkew])
   .Ident("sensi.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
     
-VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, "Sympathy Skew")
+VirtualKnob vk_decay_skew = VirtualKnob(kPotMiddleRight, param::name[param::SympathySkew])
   .Ident("sympa.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &vibe_palette));
     
-VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, "Transpose Skew")
+VirtualKnob vk_shift_skew = VirtualKnob(kPotTopLeft, param::name[param::TransposeSkew])
   .Ident("trans.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, "Warp Skew")
+VirtualKnob vk_warp_skew = VirtualKnob(kPotTopRight, param::name[param::WarpSkew])
   .Ident("warp.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, "Melt Skew")
+VirtualKnob vk_melt_skew = VirtualKnob(kPotMiddleLeft, param::name[param::MeltSkew])
   .Ident("melt.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, "Smear Skew")
+VirtualKnob vk_smear_skew = VirtualKnob(kPotMiddleRight, param::name[param::SmearSkew])
   .Ident("smear.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, "Sizzle Skew")
+VirtualKnob vk_ripple_skew = VirtualKnob(kPotBottomLeft, param::name[param::SizzleSkew])
   .Ident("sizzle.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
     
-VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, "Emote Skew")
+VirtualKnob vk_motion_skew = VirtualKnob(kPotBottomRight, param::name[param::EmoteSkew])
   .Ident("emote.skew")
   .Linear(-0.5f, 0.5f)
   .Ring(Custom(SkewKnob, &rizz_palette));
 
 /////////////////////////////////////////////////////////////////////////
 // Param Knobs which get skewed
-VirtualKnob vk_density = VirtualKnob(kPotTopLeft, "Perception")
+VirtualKnob vk_density = VirtualKnob(kPotTopLeft, param::name[param::Perception])
   .Ident("percept.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_density_skew));
 
-VirtualKnob vk_spread = VirtualKnob(kPotTopRight, "Focus")
+VirtualKnob vk_spread = VirtualKnob(kPotTopRight, param::name[param::Focus])
   .Ident("focus.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_spread_skew));
 
-VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, "Empathy")
+VirtualKnob vk_sensitivity = VirtualKnob(kPotMiddleLeft, param::name[param::Empathy])
   .Ident("sensi.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_sensitivity_skew));
 
 // in seconds, sensible minimum value depends on spectrum size and sample rate
-VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, "Sympathy")
+VirtualKnob vk_decay = VirtualKnob(kPotMiddleRight, param::name[param::Sympathy])
   .Ident("sympa.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_decay_skew));
     
-VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, "Transpose")
+VirtualKnob vk_shift = VirtualKnob(kPotTopLeft, param::name[param::Transpose])
   .Ident("trans.both")
   .Linear(-1.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_shift_skew));
     
-VirtualKnob vk_warp = VirtualKnob(kPotTopRight, "Warp")
+VirtualKnob vk_warp = VirtualKnob(kPotTopRight, param::name[param::Warp])
   .Ident("warp.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_warp_skew));
     
-VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, "Melt")
+VirtualKnob vk_melt = VirtualKnob(kPotMiddleLeft, param::name[param::Melt])
   .Ident("melt.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_melt_skew));
     
-VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, "Smear")
+VirtualKnob vk_smear = VirtualKnob(kPotMiddleRight, param::name[param::Smear])
   .Ident("smear.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_smear_skew));
     
-VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, "Sizzle")
+VirtualKnob vk_ripple = VirtualKnob(kPotBottomLeft, param::name[param::Sizzle])
   .Ident("sizzle.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_ripple_skew));
     
-VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, "Emote")
+VirtualKnob vk_motion = VirtualKnob(kPotBottomRight, param::name[param::Emote])
   .Ident("emote.both")
   .Linear(0.f, 1.f)
   .Ring(Custom(KnobWithSkew, &vk_motion_skew));
