@@ -40,18 +40,24 @@ extern VirtualButton vb_page_lock;
 extern VirtualButton vb_vibe_latch;
 extern VirtualButton vb_rizz_latch;
 
+using namespace config::settings;
+
 namespace manual
 {
-constexpr Jack jk_in_l = Jack("IN_L", "In L", JackSig::AudioIn).Short("IN L");
-constexpr Jack jk_in_r = Jack("IN_R", "In R", JackSig::AudioIn).Short("IN R");
-constexpr Jack jk_cv_1 = Jack(cv::jack[cv::A], cv::name[cv::A], JackSig::CvBi).Short(cv::name[cv::A]).SeeAlso(vk_density);
-constexpr Jack jk_cv_2 = Jack(cv::jack[cv::B], cv::name[cv::B], JackSig::CvBi).Short(cv::name[cv::B]).SeeAlso(vk_sensitivity);
-constexpr Jack jk_cv_3 = Jack(cv::jack[cv::C], cv::name[cv::C], JackSig::CvBi).Short(cv::name[cv::C]).SeeAlso(vk_spread);
-constexpr Jack jk_cv_4 = Jack(cv::jack[cv::D], cv::name[cv::D], JackSig::CvBi).Short(cv::name[cv::D]).SeeAlso(vk_decay);
-constexpr Jack jk_cv_5 = Jack(cv::jack[cv::E], cv::name[cv::E], JackSig::CvBi).Short(cv::name[cv::E]).SeeAlso(vk_shift);
-constexpr Jack jk_cv_6 = Jack(cv::jack[cv::F], cv::name[cv::F], JackSig::CvBi).Short(cv::name[cv::F]).SeeAlso(vk_warp);
-constexpr Jack jk_out_l = Jack("OUT_L", "Out L", JackSig::AudioOut).Short("OUT L");
-constexpr Jack jk_out_r = Jack("OUT_R", "Out R", JackSig::AudioOut).Short("OUT R");
+const char* jack_help = "Modulate a parameter. Use the CV Routing and CV Amount to settings pages to configure.";
+const char* cv_dest_help = "Set the parameter that this CV jack modulates.";
+const char* cv_level_help = "Attenuverter for the CV present at this jack.";
+
+Jack jk_in_l = Jack("IN_L", "In L", JackSig::AudioIn).Short("IN L");
+Jack jk_in_r = Jack("IN_R", "In R", JackSig::AudioIn).Short("IN R");
+Jack jk_cv_1 = Jack(cv::jack[cv::A], cv::name[cv::A], JackSig::CvBi).Short(cv::name[cv::A]).Help(jack_help);
+Jack jk_cv_2 = Jack(cv::jack[cv::B], cv::name[cv::B], JackSig::CvBi).Short(cv::name[cv::B]).Help(jack_help);
+Jack jk_cv_3 = Jack(cv::jack[cv::C], cv::name[cv::C], JackSig::CvBi).Short(cv::name[cv::C]).Help(jack_help);
+Jack jk_cv_4 = Jack(cv::jack[cv::D], cv::name[cv::D], JackSig::CvBi).Short(cv::name[cv::D]).Help(jack_help);
+Jack jk_cv_5 = Jack(cv::jack[cv::E], cv::name[cv::E], JackSig::CvBi).Short(cv::name[cv::E]).Help(jack_help);
+Jack jk_cv_6 = Jack(cv::jack[cv::F], cv::name[cv::F], JackSig::CvBi).Short(cv::name[cv::F]).Help(jack_help);
+Jack jk_out_l = Jack("OUT_L", "Out L", JackSig::AudioOut).Short("OUT L");
+Jack jk_out_r = Jack("OUT_R", "Out R", JackSig::AudioOut).Short("OUT R");
 
 void AttachTo(hostlink::Host& host)
 {
@@ -121,6 +127,31 @@ void AttachTo(hostlink::Host& host)
                          "the left and right processors in series. That is: input -> mono -> left processor -> right processor -> output. In this mode, the left and right audio outputs "
                          "of Alchemy Lab will be identical."
                         );
+
+    cv_a_dest.SeeAlso(cv_a_level, jk_cv_1).Help(cv_dest_help);
+    cv_a_level.SeeAlso(cv_a_dest, jk_cv_1).Help(cv_level_help);
+
+    cv_b_dest.SeeAlso(cv_b_level, jk_cv_2).Help(cv_dest_help);
+    cv_b_level.SeeAlso(cv_b_dest, jk_cv_2).Help(cv_level_help);
+
+    cv_c_dest.SeeAlso(cv_c_level, jk_cv_3).Help(cv_dest_help);
+    cv_c_level.SeeAlso(cv_c_dest, jk_cv_3).Help(cv_level_help);
+
+    cv_d_dest.SeeAlso(cv_c_level, jk_cv_4).Help(cv_dest_help);
+    cv_d_level.SeeAlso(cv_c_dest, jk_cv_4).Help(cv_level_help);
+
+    cv_e_dest.SeeAlso(cv_e_level, jk_cv_5).Help(cv_dest_help);
+    cv_e_level.SeeAlso(cv_e_dest, jk_cv_5).Help(cv_level_help);
+
+    cv_f_dest.SeeAlso(cv_f_level, jk_cv_6).Help(cv_dest_help);
+    cv_f_level.SeeAlso(cv_f_dest, jk_cv_6).Help(cv_level_help);
+
+    jk_cv_1.SeeAlso(cv_a_dest, cv_a_level);
+    jk_cv_2.SeeAlso(cv_b_dest, cv_b_level);
+    jk_cv_3.SeeAlso(cv_c_dest, cv_c_level);
+    jk_cv_4.SeeAlso(cv_d_dest, cv_d_level);
+    jk_cv_5.SeeAlso(cv_e_dest, cv_e_level);
+    jk_cv_6.SeeAlso(cv_f_dest, cv_f_level);
 
     host.Attach(thee_manual);
     host.Jacks(jk_cv_1, jk_cv_2, jk_cv_3, jk_cv_4, jk_cv_5, jk_cv_6);
@@ -231,7 +262,6 @@ void AttachTo(hostlink::Host& host)
     vb_rizz_latch.Role(VirtualButton::Role::Modal)
                  .Action("tap", "Toggle between the Rizz & Rizz Skew pages")
                  .Help("Toggle between the Rizz Page and Rizz Skew Page when viewing either.");
-
 }
 } // namespace manual
 

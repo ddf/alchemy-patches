@@ -20,6 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "alchemy/surface/virtual_knob.h"
 
+#define CONDOLENCES_CV_A "∴"
+#define CONDOLENCES_CV_B "∵"
+#define CONDOLENCES_CV_C "⊙"
+#define CONDOLENCES_CV_D "∞"
+#define CONDOLENCES_CV_E "↕"
+#define CONDOLENCES_CV_F "↔"
+
 namespace condolences
 {
 using namespace alchemy;
@@ -105,7 +112,7 @@ static constexpr const char* name[] = {
     "Emote Skew",
 };
 
-static constexpr const VirtualKnob* knob[] = {
+static constexpr VirtualKnob* knob[] = {
     &vk_density,
     &vk_spread,
     &vk_sensitivity,
@@ -124,6 +131,7 @@ static constexpr const VirtualKnob* knob[] = {
     &vk_decay_skew,
     &vk_shift_skew,
     &vk_warp_skew,
+    &vk_melt_skew,
     &vk_smear_skew,
     &vk_ripple_skew,
     &vk_motion_skew
@@ -155,12 +163,12 @@ static constexpr const char* jack[] = {
 };
 
 static constexpr const char* name[] = {
-    "∴",
-    "∵",
-    "⊙",
-    "∞",
-    "↕",
-    "↔",
+    CONDOLENCES_CV_A,
+    CONDOLENCES_CV_B,
+    CONDOLENCES_CV_C,
+    CONDOLENCES_CV_D,
+    CONDOLENCES_CV_E,
+    CONDOLENCES_CV_F,
 };
 
 } // namespace cv
