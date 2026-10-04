@@ -252,6 +252,16 @@ static void ConfigureInterface()
   config::Configure(settings, presets);
 }
 
+static void UpdateRouting(uint32_t t_ms)
+{
+  cv_matrix.Jack(0).To(config::GetCvDest(0)).Atten(config::settings::cv_a_level.Value());
+  cv_matrix.Jack(1).To(config::GetCvDest(1)).Atten(config::settings::cv_b_level.Value());
+  cv_matrix.Jack(2).To(config::GetCvDest(2)).Atten(config::settings::cv_c_level.Value());
+  cv_matrix.Jack(3).To(config::GetCvDest(3)).Atten(config::settings::cv_d_level.Value());
+  cv_matrix.Jack(4).To(config::GetCvDest(4)).Atten(config::settings::cv_e_level.Value());
+  cv_matrix.Jack(5).To(config::GetCvDest(5)).Atten(config::settings::cv_f_level.Value());
+}
+
 /* summed CV+knob values → DSP each frame */
 static void UpdateParams()
 {
@@ -277,8 +287,8 @@ static void UpdateParams()
     float dampngr   = math::interp<math::easing::quad::out>(config::dampi_min, config::dampi_max, decr);
     float density_l = math::lerp(dmin, dmax, dtl);
     float density_r = math::lerp(dmin, dmax, dtr);
-    float spread_l  = math::lerp(config::settings::focus_min.Value(), config::settings::focus_max.Value(), stl);
-    float spread_r  = math::lerp(config::settings::focus_min.Value(), config::settings::focus_max.Value(), str);
+    float spread_l  = math::lerp(config::focus::min_default, config::focus::max_default, stl);
+    float spread_r  = math::lerp(config::focus::min_default, config::focus::max_default, str);
 
     float sens  = vk_sensitivity.Value();
     float sensk = GetSkewValue(vk_sensitivity_skew);
@@ -395,23 +405,17 @@ int main()
     hw.Init(daisy::SaiHandle::Config::SampleRate::SAI_32KHZ, block_size);
     dsp::Init(hw.SampleRate());
 
-    /* Drive every switchable jack as a CV output (J3..J8). */
-    // for (uint8_t j = 0; j < kNumCvInputs; ++j)
-    // {
-    //   hw.cv_jacks[j].EnableCvOutput();
-    // }
-
-    /* CV routing.  A static layout is just setting each channel once. */
-    cv_matrix.Jack(0).To(vk_density);
-    cv_matrix.Jack(1).To(vk_sensitivity);
-    cv_matrix.Jack(2).To(vk_spread);
-    cv_matrix.Jack(3).To(vk_decay);
-    cv_matrix.Jack(4).To(vk_shift);
-    cv_matrix.Jack(5).To(vk_warp);
+    ConfigureInterface();
+    
+    cv_matrix.Jack(0).To(config::GetCvDest(0));
+    cv_matrix.Jack(1).To(config::GetCvDest(1));
+    cv_matrix.Jack(2).To(config::GetCvDest(2));
+    cv_matrix.Jack(3).To(config::GetCvDest(3));
+    cv_matrix.Jack(4).To(config::GetCvDest(4));
+    cv_matrix.Jack(5).To(config::GetCvDest(5));
 
     manual::AttachTo(host);
-    ConfigureInterface();
-
+    
     /* Preset payload — every Serializable surface gets walked on Save/Load. Order IS layout! */
     presets.Manage(pager);
     presets.Manage(locks);
@@ -434,6 +438,7 @@ int main()
         .Use(rizz_skew_page)
         //.Use(buttons)
         .Use(host)
+        .OnPoll(UpdateRouting)
         .OnFrame(UpdateParams)
         .OnRender(RenderOverlay);
 

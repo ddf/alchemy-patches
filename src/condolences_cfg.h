@@ -18,11 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "condolences_dsp.h"
-#include "condolences_gui.h"
 #include "alchemy/surface/serializable.h"
 #include "alchemy/surface/settings.h"
 #include "alchemy/surface/presets.h"
+
+#include "condolences_dsp.h"
+#include "condolences_gui.h"
+#include "condolences_prm.h"
 
 // #define PROFILE_ENABLED
 
@@ -44,6 +46,20 @@ namespace settings
   KnobHandle ripple_lfo_depth;
   KnobHandle ripple_damp_reduct;
   KnobHandle ripple_smear_boost;
+
+  SelectorHandle cv_a_dest;
+  SelectorHandle cv_b_dest;
+  SelectorHandle cv_c_dest;
+  SelectorHandle cv_d_dest;
+  SelectorHandle cv_e_dest;
+  SelectorHandle cv_f_dest;
+
+  BipolarHandle cv_a_level;
+  BipolarHandle cv_b_level;
+  BipolarHandle cv_c_level;
+  BipolarHandle cv_d_level;
+  BipolarHandle cv_e_level;
+  BipolarHandle cv_f_level;
 }
 
 
@@ -66,7 +82,7 @@ namespace perception
 
 namespace focus
 {
-  static constexpr float min_dafault = 0.0f;
+  static constexpr float min_default = 0.0f;
   static constexpr float max_default = 1.0f; 
 }
 
@@ -88,13 +104,20 @@ constexpr float damp_reduct_default = 0.6f;
 constexpr float smear_boost_default = 0.20f;
 }
 
+namespace cv
+{
+constexpr float level_default = 1.0f;
+}
+
 constexpr uint8_t mode_page = 0;
 constexpr uint8_t mode_pot  = kPotTopRight;
 constexpr uint8_t mode_count = static_cast<uint8_t>(dsp::Mode::Count);
 constexpr const char* mode_labels[mode_count] = { "Stereo", "Parallel Mono", "Series Mono" };
 
-constexpr uint8_t vibe_page = 1;
-constexpr uint8_t rizz_page = 2;
+constexpr uint8_t params_page = 3;
+constexpr uint8_t cv_assign_page = 1;
+constexpr uint8_t cv_level_page = 2;
+// we don't get more than this
 
 void Configure(Settings& settings, Presets& presets)
 {
@@ -103,11 +126,12 @@ void Configure(Settings& settings, Presets& presets)
   settings::mode = settings.Page(mode_page)
           .Pot(kPotTopRight)
           .Selector(mode_labels)
+          .Name("Mode")
           .Ident("config.mode");
 
-  settings.Page(vibe_page).Name("Vibe Settings");
+  settings.Page(params_page).Name("Internals");
 
-  settings::perception_min = settings.Page(vibe_page)
+  settings::perception_min = settings.Page(params_page)
           .Pot(kPotTopLeft)
           .Knob()
           .Name("Perception Min")
@@ -115,7 +139,7 @@ void Configure(Settings& settings, Presets& presets)
           .Default(perception::min_default)
           .Color(vibe_palette.active.rgb);
 
-  settings::perception_max = settings.Page(vibe_page)
+  settings::perception_max = settings.Page(params_page)
           .Pot(kPotTopRight)
           .Knob()
           .Name("Perception Max")
@@ -123,58 +147,144 @@ void Configure(Settings& settings, Presets& presets)
           .Default(perception::max_default)
           .Color(vibe_palette.active.rgb);
 
-  settings::focus_min = settings.Page(vibe_page)
+  settings::ripple_amount_max = settings.Page(params_page)
           .Pot(kPotMiddleLeft)
-          .Knob()
-          .Name("Focus Min")
-          .Ident("focus.min")
-          .Default(focus::min_dafault)
-          .Color(vibe_palette.active.rgb);
-
-  settings::focus_max = settings.Page(vibe_page)
-          .Pot(kPotMiddleRight)
-          .Knob()
-          .Name("Focus Max")
-          .Ident("focus.max")
-          .Default(focus::max_default)
-          .Color(vibe_palette.active.rgb);
-
-  settings.Page(rizz_page).Name("Rizz Settings");
-
-  settings::ripple_amount_max = settings.Page(rizz_page)
-          .Pot(kPotTopLeft)
           .Knob()
           .Name("Sizzle Max")
           .Ident("sizzle.max")
           .Default(ripple::amount_max_default)
           .Color(rizz_palette.active.rgb);
 
-  settings::ripple_lfo_depth = settings.Page(rizz_page)
-        .Pot(kPotTopRight)
+  settings::ripple_lfo_depth = settings.Page(params_page)
+        .Pot(kPotMiddleRight)
         .Knob()
         .Name("Sizzle LFO Depth")
         .Ident("sizzle.depth")
         .Default(ripple::depth_default)
         .Color(rizz_palette.active.rgb);
 
-  settings::ripple_damp_reduct = settings.Page(rizz_page)
-          .Pot(kPotMiddleLeft)
+  settings::ripple_damp_reduct = settings.Page(params_page)
+          .Pot(kPotBottomLeft)
           .Knob()
           .Name("Sizzle Atten (SYM)")
           .Ident("sizzle.damp.reduct")
           .Default(ripple::damp_reduct_default)
           .Color(rizz_palette.active.rgb);
 
-  settings::ripple_smear_boost = settings.Page(rizz_page)
-          .Pot(kPotMiddleRight)
+  settings::ripple_smear_boost = settings.Page(params_page)
+          .Pot(kPotBottomRight)
           .Knob()
           .Name("Sizzle Boost (SMR)")
           .Ident("sizzle.smear.boost")
           .Default(ripple::smear_boost_default)
           .Color(rizz_palette.active.rgb);
 
+  settings.Page(cv_assign_page).Name("CV Routing");
+
+  settings::cv_a_dest = settings.Page(cv_assign_page)
+          .Pot(kPotTopLeft)
+          .Selector(param::name)
+          .Default(param::Perception)
+          .Name(CONDOLENCES_CV_A " Target")
+          .Ident("cv.assign.a");
+
+  settings::cv_b_dest = settings.Page(cv_assign_page)
+          .Pot(kPotTopRight)
+          .Selector(param::name)
+          .Default(param::Empathy)
+          .Name(CONDOLENCES_CV_B " Target")
+          .Ident("cv.assign.b");
+          
+  settings::cv_c_dest = settings.Page(cv_assign_page)
+          .Pot(kPotMiddleLeft)
+          .Selector(param::name)
+          .Default(param::Focus)
+          .Name(CONDOLENCES_CV_C " Target")
+          .Ident("cv.assign.c");
+
+  settings::cv_d_dest = settings.Page(cv_assign_page)
+          .Pot(kPotMiddleRight)
+          .Selector(param::name)
+          .Default(param::Sympathy)
+          .Name(CONDOLENCES_CV_D " Target")
+          .Ident("cv.assign.d");
+
+  settings::cv_e_dest = settings.Page(cv_assign_page)
+          .Pot(kPotBottomLeft)
+          .Selector(param::name)
+          .Default(param::Transpose)
+          .Name(CONDOLENCES_CV_E " Target")
+          .Ident("cv.assign.e");
+
+  settings::cv_f_dest = settings.Page(cv_assign_page)
+          .Pot(kPotBottomRight)
+          .Selector(param::name)
+          .Default(param::Warp)
+          .Name(CONDOLENCES_CV_F " Target")
+          .Ident("cv.assign.f");
+
+  settings.Page(cv_level_page).Name("CV Amount");
+
+  settings::cv_a_level = settings.Page(cv_level_page)
+          .Pot(kPotTopLeft)
+          .Bipolar()
+          .Name(CONDOLENCES_CV_A " Amount")
+          .Default(cv::level_default)
+          .Ident("cv.level.a");
+
+  settings::cv_b_level = settings.Page(cv_level_page)
+          .Pot(kPotTopRight)
+          .Bipolar()
+          .Name(CONDOLENCES_CV_B " Amount")
+          .Default(cv::level_default)
+          .Ident("cv.level.b");
+          
+  settings::cv_c_level = settings.Page(cv_level_page)
+          .Pot(kPotMiddleLeft)
+          .Bipolar()
+          .Name(CONDOLENCES_CV_C " Amount")
+          .Default(cv::level_default)
+          .Ident("cv.level.c");
+
+  settings::cv_d_level = settings.Page(cv_level_page)
+          .Pot(kPotMiddleRight)
+          .Bipolar()
+          .Name(CONDOLENCES_CV_D " Amount")
+          .Default(cv::level_default)
+          .Ident("cv.level.d");
+
+  settings::cv_e_level = settings.Page(cv_level_page)
+          .Pot(kPotBottomLeft)
+          .Bipolar()
+          .Name(CONDOLENCES_CV_E " Amount")
+          .Default(cv::level_default)
+          .Ident("cv.level.e");
+
+  settings::cv_f_level = settings.Page(cv_level_page)
+          .Pot(kPotBottomRight)
+          .Bipolar()
+          .Name(CONDOLENCES_CV_F " Amount")
+          .Default(cv::level_default)
+          .Ident("cv.level.f");
+
   settings.UseBrightness();
   settings.UsePresets(presets);
+}
+
+static VirtualKnob vk_none = VirtualKnob();
+
+VirtualKnob& GetCvDest(uint8_t idx)
+{
+  switch(idx)
+  {
+    case 0: return *param::knob[settings::cv_a_dest.Value()];
+    case 1: return *param::knob[settings::cv_b_dest.Value()];
+    case 2: return *param::knob[settings::cv_c_dest.Value()];
+    case 3: return *param::knob[settings::cv_d_dest.Value()];
+    case 4: return *param::knob[settings::cv_e_dest.Value()];
+    case 5: return *param::knob[settings::cv_f_dest.Value()];
+  }
+  return vk_none;
 }
 
 } // namespace config
