@@ -269,17 +269,17 @@ static void UpdateParams()
   const float dmax = math::lerp(config::band_density_min, config::band_density_max, config::settings::perception_max.Value());
   {
     // decay
-    float decsk = GetSkewValue(vk_decay_skew);
+    float decsk = GetSkewValue(vk_decay_skew.Value());
     float decl  = math::constrain(vk_decay.Value() - decsk, 0.f, 1.f);
     float decr  = math::constrain(vk_decay.Value() + decsk, 0.f, 1.f);
 
     // density
-    float dsk = GetSkewValue(vk_density_skew);
+    float dsk = GetSkewValue(vk_density_skew.Value());
     float dtl = math::constrain(vk_density.Value() - dsk, 0.f, 1.f);
     float dtr = math::constrain(vk_density.Value() + dsk, 0.f, 1.f);
 
     // spread
-    float ssk = GetSkewValue(vk_spread_skew);
+    float ssk = GetSkewValue(vk_spread_skew.Value());
     float stl = math::constrain(vk_spread.Value() - ssk, 0.f, 1.f);
     float str = math::constrain(vk_spread.Value() + ssk, 0.f, 1.f);
 
@@ -291,7 +291,7 @@ static void UpdateParams()
     float spread_r  = math::lerp(config::focus::min_default, config::focus::max_default, str);
 
     float sens  = vk_sensitivity.Value();
-    float sensk = GetSkewValue(vk_sensitivity_skew);
+    float sensk = GetSkewValue(vk_sensitivity_skew.Value());
     float sensl = math::constrain(math::lerp(config::sensi_min, config::sensi_max, sens - sensk), 
                                   config::sensi_min, 
                                   config::sensi_max);
@@ -301,13 +301,13 @@ static void UpdateParams()
                                   config::sensi_max);
 
     float shft  = vk_shift.Value();
-    float shfsk = GetSkewValue(vk_shift_skew);
+    float shfsk = GetSkewValue(vk_shift_skew.Value());
     
     float warp  = vk_warp.Value();
-    float warsk = GetSkewValue(vk_warp_skew);
+    float warsk = GetSkewValue(vk_warp_skew.Value());
     
     float smear = vk_smear.Value();
-    float smesk = GetSkewValue(vk_smear_skew);
+    float smesk = GetSkewValue(vk_smear_skew.Value());
 
     float smrl  = math::constrain(math::lerp(config::smear_min, config::smear_max, smear - smesk), 
                                   config::smear_min, 
@@ -318,10 +318,10 @@ static void UpdateParams()
                                   config::smear_max);
 
     float melt  = vk_melt.Value();
-    float melsk = GetSkewValue(vk_melt_skew);
+    float melsk = GetSkewValue(vk_melt_skew.Value());
 
     float ripl  = vk_ripple.Value();
-    float ripsk = GetSkewValue(vk_ripple_skew);
+    float ripsk = GetSkewValue(vk_ripple_skew.Value());
     float ripdmpl = 1.0f - config::settings::ripple_damp_reduct.Value()*decl;
     float ripdmpr = 1.0f - config::settings::ripple_damp_reduct.Value()*decr;
 
@@ -350,7 +350,7 @@ static void UpdateParams()
                                   config::ripple::depth_max);
 
     float motn  = vk_motion.Value();
-    float motsk = GetSkewValue(vk_motion_skew);
+    float motsk = GetSkewValue(vk_motion_skew.Value());
 
     float motl  = math::constrain(math::lerp(config::motio_min, config::motio_max, motn - motsk), 
                                   config::motio_min, 

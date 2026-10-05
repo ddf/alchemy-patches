@@ -49,10 +49,10 @@ vessicle::Palette rizz_palette = {
 static constexpr float skew_max    = 0.5f;
 static constexpr float skew_detent = 0.05f;
 
-static float GetSkewValue(const VirtualKnob& fromKnob)
+static float GetSkewValue(float knob_value)
 {
-  float value = vessl::math::abs(fromKnob.Value());
-  float sign  = fromKnob.Value() > 0 ? 1.f : -1.f;
+  float value = vessl::math::abs(knob_value);
+  float sign  = knob_value > 0 ? 1.f : -1.f;
   float d = value - skew_detent;
   return d < 0 ? 0.f : vessl::math::lerp(0.f, skew_max*sign, d / (skew_max - skew_detent));
 }
@@ -66,7 +66,7 @@ static void KnobWithSkew(
 {
   VirtualKnob* skew_knob = static_cast<VirtualKnob*>(ctx);
   vessicle::Palette* palette = static_cast<vessicle::Palette*>(skew_knob->CustomCtx());
-  const float skew_val = GetSkewValue(*skew_knob);
+  const float skew_val = GetSkewValue(skew_knob->Value());
   
   FillDesc over_right;
   over_right.center_color = { 0u, 0u, 0u };
@@ -116,18 +116,27 @@ static void SkewKnob(
   uint32_t t_ms, void* ctx
 )
 {
-  vessicle::Palette* spec = static_cast<vessicle::Palette*>(ctx);
+  vessicle::Palette* palette = static_cast<vessicle::Palette*>(ctx);
 
   FillDesc fill;
   fill.mode = FillMode::Center;
   fill.compose = FillCompose::Replace;
-  fill.center_color = spec->active.rgb;
-  fill.neg_color = spec->negative.rgb;
-  fill.color = spec->positive.rgb;
+  fill.center_color = palette->active.rgb;
+  fill.neg_color = palette->negative.rgb;
+  fill.color = palette->positive.rgb;
   fill.pivot01 = 0.5f;
+
+  PipDesc bottom;
+  // norm is actually normalized, even though the knob is configured as bipolar.
+  float skew_val = GetSkewValue(norm*2.f - 1.f);
+  bottom.color = skew_val == 0 ? palette->active.rgb :
+                 skew_val > 0 ? palette->positive.rgb : palette->negative.rgb;
+  
+  bottom.blink_hz = skew_val == 0 ? 0.f : 2.f;
 
   RingFrame f;
   f.Begin(geo);
   f.Base(fill, norm, t_ms);
+  f.Pip(Region::BottomPip, bottom, 0.f, 1.f, t_ms);
   f.Emit(panel, pot);
 }
