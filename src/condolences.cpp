@@ -44,6 +44,8 @@ using namespace alchemy;
 
 namespace condolences
 {
+  const char* version = "1.0.0";
+  const char* hash    = "dcf314e93137befe3ca8717c944eeba46bceb676";
 
 /**
  * Definitely:
@@ -230,7 +232,7 @@ Settings                            settings(hw, &pager);
 Profiler                            profiler(hw);
 #endif
 CvMatrix                            cv_matrix(kNumCvInputs);
-hostlink::Host                      host(presets, "condolences", "Condolences", "0.9.4", "525c5abedeae6124c159e0f3a6f306e39ffcb62d");
+hostlink::Host                      host(presets, "condolences", "Condolences", version, hash);
 
 static void ConfigureInterface()
 {
