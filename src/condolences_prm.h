@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "alchemy/surface/virtual_knob.h"
 
-#define CONDOLENCES_CV_A "∴"
-#define CONDOLENCES_CV_B "∵"
+#define CONDOLENCES_CV_A "∀"
+#define CONDOLENCES_CV_B "∃"
 #define CONDOLENCES_CV_C "⊙"
 #define CONDOLENCES_CV_D "∞"
 #define CONDOLENCES_CV_E "↕"
