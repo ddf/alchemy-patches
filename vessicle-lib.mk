@@ -1,0 +1,4 @@
+VESSICLE_DIR = lib/vessicle
+
+C_INCLUDES = \
+	-I$(VESSICLE_DIR)

@@ -21,7 +21,6 @@ endif
 
 ALCHEMY_DIR  = lib/alchemy-sdk
 LIBDAISY_DIR = lib/libDaisy
-VESSICLE_DIR = lib/vessicle
 
 # ── App configuration - duplicate stereo_eq.mk and rename as a starting point
 include $(TARGET).mk
@@ -34,7 +33,6 @@ CFLAGS += -mgeneral_regs_only
 
 C_INCLUDES += \
     -Isrc \
-		-I$(VESSICLE_DIR) \
     -I$(ALCHEMY_DIR)/framework/include \
     -I$(ALCHEMY_DIR)/hardware/include \
     -I$(ALCHEMY_DIR)/hardware/alchemy-lab/$(BOARD)/include \
@@ -42,8 +40,6 @@ C_INCLUDES += \
 ifeq ($(BOARD),v2)
 C_DEFS += -DALCHEMY_BOARD_V2
 endif
-
-include cmsis-dsp.mk
 
 # ── Daisy bootloader build (BOOT_SRAM) ──────────────────────────────────────
 APP_TYPE = BOOT_SRAM
