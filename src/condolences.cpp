@@ -36,16 +36,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "condolences_man.h"
 #include "condolences_gui.h"
 #include "condolences_dsp.h"
-#include "vessl/vessl.h"
 #include <stdio.h>
+#include "version.h"
 
 using namespace vessl;
 using namespace alchemy;
 
 namespace condolences
 {
-  const char* version = "1.0.0";
-  const char* hash    = "dcf314e93137befe3ca8717c944eeba46bceb676";
+  //const char* version = "1.0.0";
+  const char* version = "1.0.1"; // upgrade to Alchemy SDK 0.13.0
+  const char* hash    = STR(TARGET_GIT_VERSION);
 
 /**
  * Definitely:
