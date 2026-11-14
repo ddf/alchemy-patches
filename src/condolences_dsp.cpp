@@ -19,8 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Condolences.h"
 #include "attributes.h"
 
+#include "alchemy/host_link/diagnostics.h"
+
 namespace condolences
 {
+
+extern alchemy::hostlink::Gauge<float> peak;
+
 namespace dsp
 {
   using sample_t = float;
@@ -37,15 +42,6 @@ namespace dsp
 // state
 namespace
 {
-  /** 
-   * @todo there is room for the signal arrays required by vessl::spectral if we work in 16-bit fixed point.
-   * however, to do this we will need to add 16-bit fixed point support to vessl,
-   * and then add overloads for the 16-bit ARM DSP transforms.
-   * It would be a good feature add to vessl, so I think worth doing at some point.
-   */
-  //int16_t __attribute__((section(".text"))) data0[SpectrumSize*Overlap*2];
-  //int16_t __attribute__((section(".text"))) data1[SpectrumSize*Overlap*2];
-
   // these wind up in DTCMRAM without any markup, which is good.
   
   // shared between both instances of Condol.  
@@ -305,6 +301,8 @@ void Process(
     out_left[i] = limiter_[0].process(l);
     out_right[i] = limiter_[1].process(r);
   }
+  float p = (limiter_[0].peak().read_analog() + limiter_[1].peak().read_analog()) * 0.5f;
+  peak.Set(p);
 }
 }
 }

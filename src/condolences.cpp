@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "alchemy/surface/virtual_knob.h"
 #include "alchemy/surface/virtual_button.h"
 #include "alchemy/surface/button_bank.h"
+#include "alchemy/host_link/diagnostics.h"
 
 #include "attributes.h"
 #include "profiler.h"
@@ -239,6 +240,9 @@ Profiler                            profiler(hw);
 CvMatrix                            cv_matrix(kNumCvInputs);
 hostlink::Host                      host(presets, "condolences", "Condolences", version, hash);
 
+hostlink::Diagnostics*              debug;
+hostlink::Gauge<float>              peak("audio.peak", "Output peak");
+
 static void ConfigureInterface()
 {
   vibe_skew_page.HidePot(kPotBottomLeft, true);
@@ -258,6 +262,18 @@ static void ConfigureInterface()
   pager.SetStored(kPageRizz, vk_smear.Pot(), 0.f, phys);
   pager.SetStored(kPageRizz, vk_ripple.Pot(), 0.f, phys);
   pager.SetStored(kPageRizz, vk_motion.Pot(), 0.f, phys);
+
+  debug = new hostlink::Diagnostics();
+
+  //peak.Unit("FS");
+  const bool watched = debug->Watch(peak);
+
+  host.Extend(*debug);
+
+  if (!watched || !debug->ConfigurationOk() || !host.ConfigurationOk())
+      debug->Error("Diagnostics configuration failed");
+
+  debug->Info("Ready");
 
   config::Configure(settings, presets);
 }
