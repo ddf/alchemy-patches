@@ -200,22 +200,26 @@ enum PageId : uint8_t
 Page vibe_page = Page(kPageVibe)
   .Name("Vibe")
   .Color(vibe_palette.active.hex)
-  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet);
+  .Knobs(vk_density, vk_spread, vk_sensitivity, vk_decay, vk_mix_dry, vk_mix_wet)
+  .Buttons(vb_page_lock, vb_vibe_latch);
 
 Page vibe_skew_page = Page(kPageVibeSkew)
   .Name("Vibe Skew")
   .Color(vibe_palette.active.hex)
-  .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew);
+  .Knobs(vk_density_skew, vk_spread_skew, vk_sensitivity_skew, vk_decay_skew)
+  .Buttons(vb_page_lock, vb_vibe_latch);
     
 Page rizz_page = Page(kPageRizz)
   .Name("Rizz")
   .Color(rizz_palette.active.hex)
-  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion);
+  .Knobs(vk_shift, vk_warp, vk_melt, vk_smear, vk_ripple, vk_motion)
+  .Buttons(vb_page_lock, vb_rizz_latch);
     
 Page rizz_skew_page = Page(kPageRizzSkew)
   .Name("Rizz Skew")
   .Color(rizz_palette.active.hex)
-  .Knobs(vk_shift_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew, vk_ripple_skew, vk_motion_skew);
+  .Knobs(vk_shift_skew, vk_warp_skew, vk_melt_skew, vk_smear_skew, vk_ripple_skew, vk_motion_skew)
+  .Buttons(vb_page_lock, vb_rizz_latch);
 
 //////////////////////////////////////////////////////////////////////
 // Surfaces
@@ -237,6 +241,9 @@ hostlink::Host                      host(presets, "condolences", "Condolences", 
 
 static void ConfigureInterface()
 {
+  vibe_skew_page.HidePot(kPotBottomLeft, true);
+  vibe_skew_page.HidePot(kPotBottomRight, true);
+
   pager.Cycle(hw.buttons[kButtonB1], kPageVibe, kPageRizz)
        .Latch(hw.buttons[kButtonB2], kPageVibe, kPageVibeSkew)
        .Latch(hw.buttons[kButtonB3], kPageRizz, kPageRizzSkew);
@@ -426,7 +433,7 @@ int main()
     presets.Manage(profiler);
   #endif
     presets.Manage(settings);
-    // presets.Manage(buttons);
+    presets.Manage(buttons);
     presets.UseNames();
 
     /* ControlLoop is a thin, opt-in driver for the canonical control-rate frame.
@@ -439,7 +446,7 @@ int main()
         .Use(vibe_skew_page)
         .Use(rizz_page)
         .Use(rizz_skew_page)
-        //.Use(buttons)
+        .Use(buttons)
         .Use(host)
         .OnPoll(UpdateRouting)
         .OnFrame(UpdateParams)
